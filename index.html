@@ -81,33 +81,13 @@ function musicTick(){
 // Original triumphant 16-bit fanfare: ascending brass-like melody, harmony, bass and final chord.
 function victoryFanfare(){
  if(!audio.ctx||!audio.on)return;
- const ac=audio.ctx,base=ac.currentTime+.12,master=audio.master||ac.destination;
- // Smooth, celebratory 16-bit theme: flowing eighth-note melody, arpeggios,
- // warm sustained harmonies and a long resolving final chord.
- const bpm=146,beat=60/bpm,eighth=beat/2;
- function voice(freq,at,dur,type,volume,attack=.035,release=.16){
-  const kind=type==='sawtooth'?'brass':type==='square'?'string':freq<240?'bass':'string';
-  retroInstrument(freq,at,dur,kind,volume*1.22,attack,release);
- }
- const melody=[659.25,783.99,880,1046.5,987.77,880,783.99,880,
- 1046.5,1174.66,1318.51,1174.66,1046.5,987.77,880,987.77,
- 1046.5,1174.66,1318.51,1567.98,1396.91,1318.51,1174.66,1318.51];
- melody.forEach((n,i)=>voice(n,base+i*eighth,eighth*1.28,'sawtooth',.078,.025,.11));
- const chords=[
-  [261.63,329.63,392],[293.66,349.23,440],
-  [329.63,392,493.88],[349.23,440,523.25],
-  [392,493.88,587.33],[440,523.25,659.25]];
- chords.forEach((ch,k)=>{
-  const start=base+k*beat*2;
-  ch.forEach((n,j)=>voice(n,start,beat*2.13,'triangle',.035,.08,.24));
-  for(let i=0;i<8;i++)voice(ch[i%3]*2,start+i*eighth,eighth*1.07,'triangle',.018,.012,.09);
-  voice(ch[0]/2,start,beat*.94,'square',.036,.025,.13);
-  voice(ch[0]/2,start+beat,beat*.94,'square',.031,.025,.13);
- });
- const finale=base+melody.length*eighth;
- [261.63,329.63,392,523.25,659.25,1046.5].forEach((n,i)=>
-  voice(n,finale,beat*4.2,i%2?'triangle':'sawtooth',i>3?.068:.046,.09,.65));
- voice(130.81,finale,beat*4.3,'triangle',.085,.055,.6);
+ const base=audio.ctx.currentTime+.08,step=.145;
+ // One clean ascending C-major scale, immediately followed by a final chord.
+ const scale=[523.25,587.33,659.25,698.46,783.99,880,987.77,1046.5];
+ scale.forEach((n,i)=>retroInstrument(n,base+i*step,step*.99,'brass',.088,.012,.04));
+ const end=base+scale.length*step;
+ [261.63,523.25,659.25,783.99,1046.5].forEach((n,i)=>
+  retroInstrument(n,end,.86,i===0?'bass':i%2?'string':'brass',i===0?.085:.062,.035,.28));
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
