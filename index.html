@@ -67,6 +67,17 @@ function musicTick(){
  let n=0;
  while(audio.next<now+.35&&n++<8){
   const k=audio.step%notes.length,at=audio.next,beat=k%4;
+  if(level===2){
+   const dark=[174.61,207.65,196,146.83,164.81,155.56,130.81,146.83,
+   174.61,196,207.65,196,155.56,146.83,130.81,116.54];
+   const n=dark[audio.step%dark.length];
+   musicVoice(n,at,.29,'triangle',.031);
+   if(k%4===0)musicVoice(n/2,at,.65,'sawtooth',.037);
+   if(k%8===4)drum(85,.19,.052,at);
+   if(k%4===2)drum(190,.08,.025,at);
+   if(k%2===0)drum(1800,.025,.005,at);
+   audio.next+=.235;audio.step++;continue;
+  }
   // Connected melody: notes overlap slightly and retain a natural decay.
   musicVoice(notes[k],at,.224,k%4===0?'sawtooth':'triangle',k%4===0?.039:.044);
   if(beat===0||beat===2)musicVoice(bass[Math.floor(k/4)%8],at,.33,'sawtooth',.055);
@@ -106,7 +117,7 @@ $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=au
 
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
-function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:40,h:type===1?52:type===2?35:46,dir:1,alive:true,phase:Math.random()*7})}
+function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:type===3?36:type===4?43:40,h:type===1?52:type===2?35:type===3?40:type===4?28:46,dir:1,alive:true,phase:Math.random()*7})}
 function restart(nextLevel=1,keepProgress=false){level=nextLevel;const savedLives=lives,savedPower=player&&player.powered;solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;powerHit=false;if(audio.master)audio.master.gain.value=1;score=0;lives=keepProgress?savedLives:3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
@@ -225,17 +236,17 @@ for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,
 for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y,w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
 for(const e of enemies){if(!e.alive)continue;
- const speed=e.type===1?2.0:e.type===2?1.7:1.25;
+ const speed=e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
  const nextX=e.x+e.dir*speed*dt;
  // Keep all enemy types on their own stretch of terrain; never cross a deadly gap.
  // Ground blocks touch at 40px seams. Check their full widths, not inset
  // per block: otherwise every seam looks like a pit and enemies jitter.
  const hasGroundAt=x=>solid.some(b=>b.y===ground&&x>=b.x&&x<b.x+b.w);
  const leadingEdge=nextX+(e.dir>0?e.w+3:-3),center=nextX+e.w/2;
- if(nextX<e.min||nextX>e.max||!hasGroundAt(leadingEdge)||!hasGroundAt(center)){e.dir*=-1}
+ if(nextX<e.min||nextX>e.max||(e.type<3&&(!hasGroundAt(leadingEdge)||!hasGroundAt(center)))){e.dir*=-1}
  else e.x=nextX;
- e.phase+=dt*(e.type===2?.22:.13);
- const ey=e.y+(e.type===2?Math.sin(e.phase)*12:0);
+ e.phase+=dt*(e.type===4?.28:e.type===3?.085:e.type===2?.22:.13);
+ const ey=e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
  if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
@@ -393,8 +404,13 @@ function draw(){if(level===2)undergroundBackdrop();else background();
  for(const b of solid)platform(b);
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
-for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===2?Math.sin(e.phase)*12:0);
- if(e.type===0){pix(x+3,y+10,34,30,'#405a4e');pix(x+6,y+3,28,30,'#62865c');pix(x+10,y,20,10,'#7b9f70');pix(x+10,y+13,7,7,'#ffdfad');pix(x+25,y+13,7,7,'#ffdfad');pix(x+12,y+16,3,4,'#26352b');pix(x+27,y+16,3,4,'#26352b');pix(x+5,y+36,12,10,'#2a3a34');pix(x+24,y+36,12,10,'#2a3a34')}
+for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
+ if(e.type===3){ // pale ghost with dark eyes and a waving hem
+  pix(x+8,y+2,21,7,'#d0d8e5');pix(x+3,y+9,32,24,'#e8e7ed');pix(x+5,y+29,8,8,'#e8e7ed');pix(x+16,y+29,8,11,'#d4d8e6');pix(x+27,y+29,7,8,'#e8e7ed');pix(x+10,y+15,6,9,'#28334b');pix(x+23,y+15,6,9,'#28334b');pix(x+18,y+26,5,6,'#4c5065');
+ }else if(e.type===4){ // fluttering purple bat
+  const wing=Math.round(Math.sin(e.phase*2)*7);
+  pix(x+14,y+9,17,15,'#664b86');pix(x+3,y+5+wing,15,13,'#494366');pix(x+28,y+5+wing,15,13,'#494366');pix(x+1,y+14+wing,11,7,'#756092');pix(x+31,y+14+wing,11,7,'#756092');pix(x+17,y+13,4,5,'#ed8f9c');pix(x+25,y+13,4,5,'#ed8f9c');pix(x+20,y+22,5,5,'#3b334a');
+ }else if(e.type===0){pix(x+3,y+10,34,30,'#405a4e');pix(x+6,y+3,28,30,'#62865c');pix(x+10,y,20,10,'#7b9f70');pix(x+10,y+13,7,7,'#ffdfad');pix(x+25,y+13,7,7,'#ffdfad');pix(x+12,y+16,3,4,'#26352b');pix(x+27,y+16,3,4,'#26352b');pix(x+5,y+36,12,10,'#2a3a34');pix(x+24,y+36,12,10,'#2a3a34')}
  else if(e.type===1){pix(x+3,y+14,38,37,'#652e3c');pix(x+7,y+5,30,36,'#b24a4b');pix(x+13,y,18,12,'#c77756');pix(x+7,y+15,8,8,'#fff0c3');pix(x+28,y+15,8,8,'#fff0c3');pix(x+10,y+18,4,5,'#2d2338');pix(x+31,y+18,4,5,'#2d2338');pix(x+3,y+43,13,9,'#403342');pix(x+28,y+43,13,9,'#403342')}
  else{pix(x+4,y+8,30,22,'#274568');pix(x+9,y+2,20,25,'#4e93bd');pix(x+15,y-3,8,7,'#8fdbe8');pix(x+10,y+12,7,7,'#ebefff');pix(x+23,y+12,7,7,'#ebefff');pix(x+12,y+15,3,4,'#252b44');pix(x+25,y+15,3,4,'#252b44');pix(x-2,y+22,10,5,'#65b2d3');pix(x+30,y+22,10,5,'#65b2d3')}
 }
