@@ -73,37 +73,38 @@ function musicVoice(freq,at,dur,type,volume){
 }
 // Original 16-bit rock arrangements: four-bar harmonic journeys, not random notes.
 // Each part has a distinct arc: exploration -> tension -> lift -> resolution.
+// Composed leitmotifs. Every measure is exactly 16 sixteenth notes.
+// Surface: Am-F-Dm-E then Am-F-E-Am. Cave: Em-C-Am-B then Em-C-B-Em.
+const pitch=m=>440*Math.pow(2,(m-69)/12);
 const ROCK={
-  surface:{
-    bpm:132,
-    chords:[[110,130.81,164.81],[98,123.47,146.83],[87.31,110,130.81],[98,123.47,164.81],
-      [130.81,164.81,196],[110,138.59,164.81],[98,123.47,146.83],[110,130.81,164.81]],
-    lead:[
-      [329.63,4],[392,2],[440,2],[493.88,4],[440,2],[392,2],
-      [369.99,4],[329.63,4],[293.66,4],[329.63,4],
-      [261.63,4],[329.63,2],[392,2],[440,4],[493.88,4],
-      [523.25,6],[493.88,2],[440,4],[392,4],
-      [329.63,4],[392,2],[440,2],[523.25,4],[587.33,4],
-      [659.25,4],[587.33,2],[523.25,2],[493.88,4],[440,4],
-      [392,6],[329.63,2],[293.66,4],[329.63,4],
-      [440,4],[392,2],[329.63,2],[293.66,4],[329.63,4]
-    ]
-  },
-  cave:{
-    bpm:106,
-    chords:[[82.41,98,123.47],[73.42,87.31,110],[65.41,82.41,98],[77.78,92.5,116.54],
-      [82.41,98,123.47],[92.5,110,138.59],[73.42,87.31,110],[82.41,98,123.47]],
-    lead:[
-      [164.81,6],[196,2],[185,4],[164.81,4],
-      [146.83,6],[138.59,2],[123.47,4],[146.83,4],
-      [130.81,8],[164.81,4],[146.83,4],
-      [155.56,6],[185,2],[174.61,4],[155.56,4],
-      [164.81,4],[196,4],[246.94,4],[220,4],
-      [185,6],[220,2],[207.65,4],[185,4],
-      [146.83,8],[164.81,4],[138.59,4],
-      [164.81,6],[146.83,2],[123.47,8]
-    ]
-  }
+ surface:{
+  bpm:124, roots:[45,41,38,40,45,41,40,45],
+  // A -> response -> rising variation -> arrival. The 3-note call E-G-A returns.
+  bars:[
+   [[76,4],[79,2],[81,2],[79,4],[76,4]],
+   [[76,4],[79,2],[81,2],[84,4],[81,4]],
+   [[77,4],[76,2],[74,2],[72,4],[74,4]],
+   [[76,6],[74,2],[71,4],[76,4]],
+   [[76,4],[79,2],[81,2],[79,2],[81,2],[84,4]],
+   [[84,4],[83,2],[81,2],[79,4],[76,4]],
+   [[80,4],[83,2],[86,2],[83,4],[80,4]],
+   [[81,8],[76,4],[69,4]]
+  ]
+ },
+ cave:{
+  bpm:104, roots:[40,36,33,35,40,36,35,40],
+  // A falling minor-third 'ghost call' repeats in different harmony.
+  bars:[
+   [[71,6],[67,2],[64,4],[0,4]],
+   [[71,6],[67,2],[72,4],[71,4]],
+   [[69,6],[64,2],[60,4],[64,4]],
+   [[66,4],[71,4],[74,6],[0,2]],
+   [[71,6],[67,2],[64,2],[67,2],[71,4]],
+   [[72,4],[71,2],[67,2],[64,8]],
+   [[66,4],[69,4],[71,4],[74,4]],
+   [[76,8],[71,4],[64,4]]
+  ]
+ }
 };
 function addRockGuitar(freq,at,duration,volume){
  // Layered detuned sampled strings approximate a crunchy SNES rock guitar.
@@ -119,29 +120,28 @@ function musicTick(){
   const song=level===2?ROCK.cave:ROCK.surface;
   const beat=60/song.bpm/4; // sixteenth-note sequencing
   const k=audio.step%128,at=audio.next;
-  const bar=Math.floor(k/16),within=k%16,root=song.chords[bar];
+  const bar=Math.floor(k/16),within=k%16,root=pitch(song.roots[bar]);
   const cave=level===2;
   // Evolving eighth-note bass with syncopated roots, fifths, and little fills.
   if(k%2===0){
-    const bnote=(within===6||within===14)?root[1]:within===10?root[2]/2:root[0];
+    const bnote=(within===6||within===14)?root*1.5:within===10?root*2:root;
     retroInstrument(bnote,at,beat*(within===0?3.4:1.65),'bass',cave?.080:.092,.008,.11);
   }
   // Powerful, clearly pitched guitar chords: rhythm changes every phrase.
   if(within===0||within===7||within===10||(bar>=4&&within===14)){
     const chordLength=within===0?beat*6:beat*3.5;
-    root.slice(0,2).forEach((n,i)=>addRockGuitar(n*2,at,chordLength,cave?.040:.056-i*.006));
+    [root*2,root*(cave?(bar===3||bar===6?1.5:1.1892):(bar===3||bar===6?1.2599:1.1892))*2].forEach((n,i)=>addRockGuitar(n,at,chordLength,(cave?.035:.049)-i*.008));
   }
-  // Melody is composed in connected phrases lasting several notes.
-  const melodicStep=k%128;let pos=0;
-  for(const [freq,units] of song.lead){
-    if(pos===melodicStep){
-      const dur=units*beat;
-      retroInstrument(freq,at,dur*1.12,cave?'string':'brass',cave?.064:.074,.055,Math.min(.36,dur*.35));
-      if(!cave&&bar>=4)retroInstrument(freq/2,at,dur*.97,'string',.027,.065,.20);
-      if(cave&&bar>=4)retroInstrument(freq*1.5,at,dur*.8,'string',.022,.11,.24);
+  // Exact thematic phrases: coherent motives and deliberate cadences in every bar.
+  let position=0;
+  for(const [midi,units] of song.bars[bar]){
+    if(position===within&&midi){
+      const freq=pitch(midi),dur=units*beat;
+      retroInstrument(freq,at,dur*1.08,cave?'string':'brass',cave?.067:.078,.045,Math.min(.29,dur*.31));
+      if(bar>=4)retroInstrument(freq/2,at,dur*.98,'string',cave?.020:.032,.045,.21);
       break;
     }
-    pos+=units;
+    position+=units;
   }
   // Distinct rock drum groove; underground gains tom-like ominous pulses.
   if(within===0||within===8)drum(cave?85:125,.18,cave?.10:.145,at);
