@@ -72,10 +72,24 @@ for(let i=0;i<45;i++){let x=i*110+45-camera*.6;if(x<-60||x>W+60)continue;pix(x,3
 }
 function platform(b){if(b.x-camera>W||b.x+b.w-camera<0)return;let x=b.x-camera;pix(x,b.y,b.w,8,'#75a45d');pix(x,b.y+8,b.w,Math.min(82,b.h-8),'#805842');for(let tx=0;tx<b.w;tx+=28){pix(x+tx,b.y+13,2,7,'#ad805a');pix(x+tx+13,b.y+35,9,3,'#654934')}pix(x,b.y, b.w,3,'#b2d076')}
 const spriteSheet=new Image();spriteSheet.src='data:image/png;base64,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';
+// Remove the leftover dark matte pixels from the source sprite sheet.
+// Preserve all black pixels inside the silhouette (cap, shirt, shoes).
+let cleanedSprite=null;
+spriteSheet.addEventListener('load',()=>{
+ const off=document.createElement('canvas');off.width=spriteSheet.naturalWidth;off.height=spriteSheet.naturalHeight;
+ const ctx=off.getContext('2d',{willReadFrequently:true});ctx.drawImage(spriteSheet,0,0);
+ ctx.globalCompositeOperation='destination-out';
+ function cut(points){ctx.beginPath();ctx.moveTo(...points[0]);for(let i=1;i<points.length;i++)ctx.lineTo(...points[i]);ctx.closePath();ctx.fill()}
+ // Both used sprite frames had rectangular gray halos near the legs.
+ cut([[31,33],[39,33],[39,55],[27,55],[28,43],[29,37]]);
+ cut([[71,35],[79,35],[79,55],[67,55],[69,44]]);
+ ctx.globalCompositeOperation='source-over';cleanedSprite=off;
+});
 function avatar(p){
  const dx=Math.round(p.x-camera-16),dy=Math.round(p.y-30);
  if(inv>0&&Math.floor(inv/5)%2===0)return;
  if(!spriteSheet.complete||!spriteSheet.naturalWidth)return;
+ const img=cleanedSprite||spriteSheet;
  const moving=Math.abs(p.vx)>.55,air=!p.grounded;
  // Use only complete sprite frames. The third image cropped the cap.
  // During a jump cycle alternate a dynamic takeoff pose and an upright apex pose.
@@ -88,7 +102,7 @@ function avatar(p){
  if(p.face<0)g.scale(-1,1);
  g.rotate(angle);
  g.scale(1,stretch);
- g.drawImage(spriteSheet,frame*40,0,40,56,-28,-74+squat,56,74);
+ g.drawImage(img,frame*40,0,40,56,-28,-74+squat,56,74);
  g.restore();
 }
 function draw(){background();for(const b of solid)platform(b);
