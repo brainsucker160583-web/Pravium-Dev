@@ -18,7 +18,7 @@ function tone(freq,dur=.17,type='square',vol=.09,when=0){if(!audio.ctx||!audio.o
 const notes=[220,220,261.63,293.66,330,293.66,261.63,220,196,220,261.63,293.66,392,330,293.66,261.63,220,220,261.63,293.66,330,392,440,392,330,293.66,261.63,220,196,174.61,196,220];
 const bass=[110,110,98,98,87.31,87.31,98,98];
 function drum(freq,dur,vol,at){if(!audio.ctx||!audio.on)return;const ac=audio.ctx,o=ac.createOscillator(),v=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(freq,at);o.frequency.exponentialRampToValueAtTime(Math.max(45,freq*.35),at+dur);v.gain.setValueAtTime(vol,at);v.gain.exponentialRampToValueAtTime(.001,at+dur);o.connect(v).connect(ac.destination);o.start(at);o.stop(at+dur+.01)}
-function musicTick(){if(!audio.ctx||!audio.on||scene!=='play')return;const now=audio.ctx.currentTime;if(audio.next<now)audio.next=now+.04;let n=0;while(audio.next<now+.35&&n++<8){const k=audio.step%notes.length,at=audio.next,beat=k%4;if(k%2===0)tone(notes[k],.16,'sawtooth',.038,at);else tone(notes[k],.09,'square',.034,at);if(beat===0||beat===2)tone(bass[Math.floor(k/4)%8],.23,'sawtooth',.056,at);if(beat===0)drum(125,.12,.095,at);if(beat===2)drum(230,.075,.047,at);drum(2400,.018,.009,at);audio.next+=.1875;audio.step++}}
+function musicTick(){if(!audio.ctx||!audio.on||scene!=='play')return;const now=audio.ctx.currentTime;if(audio.next<now)audio.next=now+.04;let n=0;while(audio.next<now+.35&&n++<8){const k=audio.step%notes.length,at=audio.next,beat=k%4;if(k%2===0)tone(notes[k],.16,'sawtooth',.0456,at);else tone(notes[k],.09,'square',.0408,at);if(beat===0||beat===2)tone(bass[Math.floor(k/4)%8],.23,'sawtooth',.0672,at);if(beat===0)drum(125,.12,.114,at);if(beat===2)drum(230,.075,.0564,at);drum(2400,.018,.0108,at);audio.next+=.1875;audio.step++}}
 function sfx(kind){if(!audio.ctx||!audio.on)return;const now=audio.ctx.currentTime;if(kind==='jump'){tone(330,.08,'square',.075);tone(440,.13,'square',.07,now+.07)}if(kind==='coin'){tone(784,.09,'square',.11);tone(1175,.22,'square',.10,now+.085)}if(kind==='stomp'){tone(180,.11,'sawtooth',.08);tone(125,.16,'triangle',.09,now+.07)}if(kind==='hurt'){tone(175,.24,'sawtooth',.13);tone(110,.28,'sawtooth',.08,now+.12)}if(kind==='portal'){for(let i=0;i<6;i++)tone([293.66,349.23,440,587.33,698.46,880][i],.33,'triangle',.12,now+i*.16)}if(kind==='checkpoint'){tone(523,.13,'triangle',.07);tone(784,.22,'triangle',.09,now+.12)}}
 $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=audio.on?'♫ TON AN':'♫ TON AUS';$('audioToggle').setAttribute('aria-label',audio.on?'Ton ausschalten':'Ton einschalten');if(audio.on){A();audio.next=0}};
 
@@ -185,7 +185,7 @@ function avatar(p){
  g.restore();
 }
 function draw(){background();for(const b of solid)platform(b);
-for(const d of decor){let x=d.x-camera;if(x<-15||x>W+15)continue;pix(x,d.y,4,9,'#39784a');pix(x-4,d.y-3,12,6,d.kind?'#ecb9b9':'#e2d18b')}
+// Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
 for(const e of enemies){if(!e.alive)continue;let x=e.x-camera,y=e.y+Math.sin(e.phase)*2;pix(x+2,y+7,25,19,'#445949');pix(x+5,y+1,19,15,'#68885c');pix(x+7,y+5,5,5,'#ffdfad');pix(x+18,y+5,5,5,'#ffdfad');pix(x+9,y+7,2,3,'#26352b');pix(x+20,y+7,2,3,'#26352b');pix(x+3,y+21,7,6,'#2a3a34');pix(x+19,y+21,7,6,'#2a3a34')}
 for(const x of [1100,2670]){pix(x-camera,ground-64,7,64,'#d7c494');pix(x-camera+4,ground-70,22,16,checkpoint>=x?'#e9d070':'#a7b9cf')}
