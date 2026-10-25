@@ -77,7 +77,7 @@ function avatar(p){
  if(inv>0&&Math.floor(inv/5)%2===0)return;
  if(!spriteSheet.complete||!spriteSheet.naturalWidth)return;
  const moving=Math.abs(p.vx)>.55;
- const frame=!p.grounded?2:moving?(Math.floor(p.walk*.32)%2?1:0):0;
+ const frame=!p.grounded?0:moving?(Math.floor(p.walk*.32)%2?1:0):0; // Use complete portrait frame in air; jump crop cut off cap.
  g.save();
  if(p.face<0){g.translate(dx+56,0);g.scale(-1,1);g.drawImage(spriteSheet,frame*40,0,40,56,0,dy,56,74)}
  else g.drawImage(spriteSheet,frame*40,0,40,56,dx,dy,56,74);
