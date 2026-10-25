@@ -9,7 +9,7 @@
 const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=960,H=540,worldW=4300,ground=460;
 const keys={left:false,right:false,jump:false,fire:false},pad={left:false,right:false,jump:false,fire:false,start:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[],rotors=[];
-let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,portal=4150;
+let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,powerHit=false,portal=4150;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,next:0,step:0,timer:null,master:null};
 const A=()=>{if(!audio.ctx){try{audio.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return}}if(!audio.master){audio.master=audio.ctx.createGain();audio.master.connect(audio.ctx.destination)}if(audio.ctx.state==='suspended')audio.ctx.resume();if(!audio.timer)audio.timer=setInterval(musicTick,110)};
@@ -48,15 +48,15 @@ $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=au
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
 function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:40,h:type===1?52:type===2?35:46,dir:1,alive:true,phase:Math.random()*7})}
-function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;if(audio.master)audio.master.gain.value=1;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
+function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;powerHit=false;if(audio.master)audio.master.gain.value=1;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
 [[310,385,135],[570,318,150],[795,363,125],[1090,403,175],[1360,345,145],[1620,295,150],[1920,388,140],[2170,324,145],[2460,360,130],[2730,390,160],[3000,326,160],[3320,359,160],[3600,395,180],[3900,350,150]].forEach(a=>rect(a[0],a[1],a[2],20));
 [[200,412],[355,343],[410,343],[625,275],[827,322],[1140,360],[1405,304],[1670,255],[1980,344],[2240,283],[2520,318],[2790,345],[3060,285],[3380,315],[3660,350],[3970,308],[4065,403]].forEach(a=>money(...a));total=coins.length;
 // Three types: green walkers, red charging guards, and blue floating enemies.
 [[680,414,600,860,0],[1450,408,1350,1610,1],[2090,414,1920,2260,0],[2920,425,2760,3110,2],[3750,408,3590,4020,1],
- [480,414,440,610,0],[1210,425,1120,1330,2],[1780,408,1700,1845,1],[2360,414,2290,2500,0],[3180,425,3100,3300,2],
- [3490,414,3440,3570,0],[4005,408,3940,4090,1]].forEach(a=>foe(...a));
+ [480,414,440,610,0],[1210,425,1120,1330,2],[1940,408,1900,2050,1],[2360,414,2290,2500,0],[3180,425,3100,3300,2],
+ [3540,414,3510,3590,0],[4005,408,3940,4090,1]].forEach(a=>foe(...a));
  // Original revolving arc hazards; separated from checkpoints and the starting area.
  [[735,333,3,30,.044],[1525,267,4,27,-.038],[2235,251,3,31,.048],[2890,318,4,29,-.041],[3645,316,3,29,.045]].forEach(([x,y,count,spacing,speed])=>rotors.push({x,y,count,spacing,speed,phase:0}));
  // Extra stepping stones, deliberately within the hero's jumping range.
@@ -77,7 +77,9 @@ function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function pix(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)}
 function puff(x,y,col,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*5-1,life:25+Math.random()*20,color:col})}
 function hurt(){if(inv>0||freezeFrames>0)return;
- lives--;updateHud();deathPending=lives<=0;inv=95;
+ powerHit=Boolean(player.powered);
+ if(powerHit){player.powered=false;updateHud()}else{lives--;updateHud()}
+ deathPending=!powerHit&&lives<=0;inv=95;
  // Punchy impact (90 ms), followed by complete silence during hit-stop.
  freezeFrames=35;
  if(audio.ctx&&audio.master){
@@ -99,8 +101,9 @@ function finishHit(){
  audio.next=audio.ctx?audio.ctx.currentTime+.48:0;
  sfx('hurt');puff(player.x+12,player.y+22,'#f5a080',18);
  if(deathPending){scene='dead';show('GAME OVER','Keine Sorge – ein weiterer Versuch kostet nichts.','NOCHMAL');gameOverJingle()}
+ else if(powerHit){player.vx=-player.face*3;player.vy=-5;toast='POWER-UP VERLOREN!';toastTime=85}
  else{player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;toast='Autsch! Zurück zum Kontrollpunkt';toastTime=85}
- deathPending=false;
+ deathPending=false;powerHit=false;
 }
 function step(dt){if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
 const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
