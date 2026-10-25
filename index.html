@@ -8,7 +8,7 @@
 'use strict';
 const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=960,H=540,worldW=4300,ground=460;
-const keys={left:false,right:false,jump:false,fire:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[];
+const keys={left:false,right:false,jump:false,fire:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[],rotors=[];
 let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,portal=4150;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,next:0,step:0,timer:null,master:null};
@@ -37,13 +37,21 @@ $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=au
 
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
-function foe(x,y,min,max){enemies.push({x,y,min,max,dir:1,alive:true,phase:Math.random()*7})}
-function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;if(audio.master)audio.master.gain.value=1;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
+function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:40,h:type===1?52:type===2?35:46,dir:1,alive:true,phase:Math.random()*7})}
+function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;if(audio.master)audio.master.gain.value=1;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
 [[310,385,135],[570,318,150],[795,363,125],[1090,403,175],[1360,345,145],[1620,295,150],[1920,388,140],[2170,324,145],[2460,360,130],[2730,390,160],[3000,326,160],[3320,359,160],[3600,395,180],[3900,350,150]].forEach(a=>rect(a[0],a[1],a[2],20));
 [[200,412],[355,343],[410,343],[625,275],[827,322],[1140,360],[1405,304],[1670,255],[1980,344],[2240,283],[2520,318],[2790,345],[3060,285],[3380,315],[3660,350],[3970,308],[4065,403]].forEach(a=>money(...a));total=coins.length;
-[[680,414,600,860],[1450,414,1350,1610],[2090,414,1920,2260],[2920,414,2760,3110],[3750,414,3590,4020]].forEach(a=>foe(...a));
+// Three types: green walkers, red charging guards, and blue floating enemies.
+[[680,414,600,860,0],[1450,408,1350,1610,1],[2090,414,1920,2260,0],[2920,425,2760,3110,2],[3750,408,3590,4020,1],
+ [480,414,440,610,0],[1210,425,1120,1330,2],[1780,408,1700,1845,1],[2360,414,2290,2500,0],[3180,425,3100,3300,2],
+ [3490,414,3440,3570,0],[4005,408,3940,4090,1]].forEach(a=>foe(...a));
+ // Original revolving arc hazards; separated from checkpoints and the starting area.
+ [[735,333,3,30,.044],[1525,267,4,27,-.038],[2235,251,3,31,.048],[2890,318,4,29,-.041],[3645,316,3,29,.045]].forEach(([x,y,count,spacing,speed])=>rotors.push({x,y,count,spacing,speed,phase:0}));
+ // Extra stepping stones, deliberately within the hero's jumping range.
+ [[450,346,98],[935,343,105],[1215,326,104],[1510,271,106],[1805,355,108],[2050,322,96],
+ [2320,279,112],[2595,340,100],[2880,292,102],[3175,311,100],[3460,320,100],[3760,309,103]].forEach(a=>rect(a[0],a[1],a[2],20));
 for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
 powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:false};
 updateHud()}
@@ -94,10 +102,12 @@ p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid
 if(p.y>H+100)hurt();
 p.walk+=Math.abs(p.vx)*.13*dt;
 for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,h:28})){item.taken=true;p.powered=true;toast="RETROBÄLLE FREIGESCHALTET! F / J / FEUER";toastTime=165;sfx("checkpoint");updateHud()}}
-for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y,w:40,h:46})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
+for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y,w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
-for(const e of enemies){if(!e.alive)continue;e.x+=e.dir*1.25*dt;if(e.x>e.max)e.dir=-1;if(e.x<e.min)e.dir=1;e.phase+=dt*.13;
-if(hit(p,{x:e.x,y:e.y,w:40,h:46})){if(p.vy>1&&p.y+p.h<e.y+24){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+14,e.y+14,'#b8df7e',14);sfx('stomp')}else hurt()}}
+for(const e of enemies){if(!e.alive)continue;e.x+=e.dir*(e.type===1?2.0:e.type===2?1.7:1.25)*dt;if(e.x>e.max)e.dir=-1;if(e.x<e.min)e.dir=1;e.phase+=dt*(e.type===2?.22:.13);
+ const ey=e.y+(e.type===2?Math.sin(e.phase)*12:0);
+ if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
+for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
 if(p.x>portal-30){sfx('portal');scene='win';show('ZEITPORTAL ERREICHT!','Du hast das Mittelalter geschafft und '+score+' von '+total+' Münzen gesammelt. Die Industrialisierung folgt in einem späteren Level.','ERNEUT SPIELEN')}
@@ -233,7 +243,16 @@ function avatar(p){
 function draw(){background();for(const b of solid)platform(b);
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
-for(const e of enemies){if(!e.alive)continue;let x=e.x-camera,y=e.y+Math.sin(e.phase)*2;pix(x+3,y+10,34,30,'#405a4e');pix(x+6,y+3,28,30,'#62865c');pix(x+10,y,20,10,'#7b9f70');pix(x+10,y+13,7,7,'#ffdfad');pix(x+25,y+13,7,7,'#ffdfad');pix(x+12,y+16,3,4,'#26352b');pix(x+27,y+16,3,4,'#26352b');pix(x+5,y+36,12,10,'#2a3a34');pix(x+24,y+36,12,10,'#2a3a34')}
+for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===2?Math.sin(e.phase)*12:0);
+ if(e.type===0){pix(x+3,y+10,34,30,'#405a4e');pix(x+6,y+3,28,30,'#62865c');pix(x+10,y,20,10,'#7b9f70');pix(x+10,y+13,7,7,'#ffdfad');pix(x+25,y+13,7,7,'#ffdfad');pix(x+12,y+16,3,4,'#26352b');pix(x+27,y+16,3,4,'#26352b');pix(x+5,y+36,12,10,'#2a3a34');pix(x+24,y+36,12,10,'#2a3a34')}
+ else if(e.type===1){pix(x+3,y+14,38,37,'#652e3c');pix(x+7,y+5,30,36,'#b24a4b');pix(x+13,y,18,12,'#c77756');pix(x+7,y+15,8,8,'#fff0c3');pix(x+28,y+15,8,8,'#fff0c3');pix(x+10,y+18,4,5,'#2d2338');pix(x+31,y+18,4,5,'#2d2338');pix(x+3,y+43,13,9,'#403342');pix(x+28,y+43,13,9,'#403342')}
+ else{pix(x+4,y+8,30,22,'#274568');pix(x+9,y+2,20,25,'#4e93bd');pix(x+15,y-3,8,7,'#8fdbe8');pix(x+10,y+12,7,7,'#ebefff');pix(x+23,y+12,7,7,'#ebefff');pix(x+12,y+15,3,4,'#252b44');pix(x+25,y+15,3,4,'#252b44');pix(x-2,y+22,10,5,'#65b2d3');pix(x+30,y+22,10,5,'#65b2d3')}
+}
+for(const rotor of rotors){const x=rotor.x-camera;if(x< -170||x>W+170)continue;
+ pix(x-8,rotor.y-8,16,16,'#515a73');pix(x-4,rotor.y-4,8,8,'#e8c77a');
+ for(let j=1;j<=rotor.count;j++){let rx=x+Math.cos(rotor.phase)*rotor.spacing*j,ry=rotor.y+Math.sin(rotor.phase)*rotor.spacing*j;
+ pix(rx-10,ry-10,20,20,'#bd4f38');pix(rx-7,ry-7,14,14,'#f38d42');pix(rx-4,ry-4,8,8,'#ffdd78')}
+}
 for(const item of powerups){if(item.taken)continue;const x=item.x-camera,y=item.y+Math.sin(t*.075)*4;pix(x-14,y-14,28,28,'#34415f');pix(x-11,y-11,22,22,'#ddb65b');pix(x-7,y-7,14,14,'#4e77b7');pix(x-3,y-3,6,6,'#eaf4ff')}
 for(const b of shots){let x=b.x-camera,y=b.y;pix(x-7,y-7,14,14,'#233c74');pix(x-5,y-5,10,10,'#65bde1');pix(x-2,y-2,4,4,'#fff2ad')}
 for(const x of [1100,2670]){pix(x-camera,ground-64,7,64,'#d7c494');pix(x-camera+4,ground-70,22,16,checkpoint>=x?'#e9d070':'#a7b9cf')}
