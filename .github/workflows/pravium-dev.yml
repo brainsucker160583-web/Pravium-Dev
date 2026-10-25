@@ -1,0 +1,44 @@
+name: Pravium Dev - Cloud-Auftrag
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Nummer eines bestehenden Auftrags'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  intake:
+    if: github.event_name == 'workflow_dispatch' || github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Auftrag prüfen und Rückmeldung geben
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+          OWNER: ${{ github.repository_owner }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue="$(gh api "repos/$REPO/issues/$ISSUE_NUMBER")"
+          author="$(jq -r '.user.login' <<< "$issue")"
+          if [[ "$author" != "$OWNER" ]]; then
+            echo 'Nur Aufträge des Repository-Eigentümers dürfen verarbeitet werden.'
+            exit 0
+          fi
+          title="$(jq -r '.title' <<< "$issue")"
+          if [[ "$title" != "[Pravium Dev]"* ]]; then
+            echo 'Kein Pravium-Dev-Auftrag.'
+            exit 0
+          fi
+          message='🤖 **Pravium Dev hat den Auftrag empfangen.** Der kostenlose Cloud-Workflow funktioniert unabhängig vom eigenen PC. Dies ist zunächst der sichere Eingangs- und Prüfschritt; eine KI führt noch keine Codeänderungen aus. Dafür muss zuerst eine kostenlose KI-Anbindung eingerichtet werden. Es wurden keine Kosten ausgelöst.'
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$message"
