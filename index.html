@@ -42,7 +42,7 @@ function gameOverJingle(){
  }
  tone(146.83,.62,'sawtooth',.037,at-.12);
 }
-function sfx(kind){if(!audio.ctx||!audio.on)return;const now=audio.ctx.currentTime;if(kind==='retroshot'){const ac=audio.ctx,dur=.23,n=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,n,ac.sampleRate),data=buf.getChannelData(0);for(let i=0;i<n;i++){const fade=Math.pow(1-i/n,1.15);data[i]=(Math.random()*2-1)*fade}const src=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();src.buffer=buf;filter.type='highpass';filter.Q.value=.75;filter.frequency.setValueAtTime(3400,now);filter.frequency.exponentialRampToValueAtTime(900,now+dur);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.235,now+.008);gain.gain.exponentialRampToValueAtTime(.001,now+dur);src.connect(filter).connect(gain).connect(audio.master||ac.destination);src.start(now);src.stop(now+dur);tone(260,.08,'sawtooth',.042,now);tone(155,.13,'square',.025,now+.06)}if(kind==='jump'){const ac=audio.ctx,o=ac.createOscillator(),v=ac.createGain();o.type='square';o.frequency.setValueAtTime(290,now);o.frequency.exponentialRampToValueAtTime(790,now+.39);v.gain.setValueAtTime(.001,now);v.gain.linearRampToValueAtTime(.084,now+.018);v.gain.setValueAtTime(.084,now+.20);v.gain.exponentialRampToValueAtTime(.001,now+.43);o.connect(v).connect(audio.master||ac.destination);o.start(now);o.stop(now+.45)}if(kind==='coin'){tone(784,.09,'square',.11);tone(1175,.22,'square',.10,now+.085)}if(kind==='stomp'){tone(180,.11,'sawtooth',.08);tone(125,.16,'triangle',.09,now+.07)}if(kind==='hurt'){tone(660,.095,'sawtooth',.28,now);tone(185,.22,'square',.25,now+.09);tone(88,.36,'sawtooth',.22,now+.19);tone(910,.075,'square',.15,now+.12)}if(kind==='portal'){for(let i=0;i<6;i++)tone([293.66,349.23,440,587.33,698.46,880][i],.33,'triangle',.12,now+i*.16)}if(kind==='checkpoint'){tone(523,.13,'triangle',.07);tone(784,.22,'triangle',.09,now+.12)}}
+function sfx(kind){if(!audio.ctx||!audio.on)return;const now=audio.ctx.currentTime;if(kind==='retroshot'){const ac=audio.ctx,dur=.23,n=Math.floor(ac.sampleRate*dur),buf=ac.createBuffer(1,n,ac.sampleRate),data=buf.getChannelData(0);for(let i=0;i<n;i++){const fade=Math.pow(1-i/n,1.15);data[i]=(Math.random()*2-1)*fade}const src=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();src.buffer=buf;filter.type='highpass';filter.Q.value=.75;filter.frequency.setValueAtTime(3400,now);filter.frequency.exponentialRampToValueAtTime(900,now+dur);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.235,now+.008);gain.gain.exponentialRampToValueAtTime(.001,now+dur);src.connect(filter).connect(gain).connect(audio.master||ac.destination);src.start(now);src.stop(now+dur);tone(260,.08,'sawtooth',.042,now);tone(155,.13,'square',.025,now+.06)}if(kind==='jump'){const ac=audio.ctx,o=ac.createOscillator(),v=ac.createGain();o.type='square';o.frequency.setValueAtTime(290,now);o.frequency.exponentialRampToValueAtTime(790,now+.39);v.gain.setValueAtTime(.001,now);v.gain.linearRampToValueAtTime(.054,now+.018);v.gain.setValueAtTime(.054,now+.20);v.gain.exponentialRampToValueAtTime(.001,now+.43);o.connect(v).connect(audio.master||ac.destination);o.start(now);o.stop(now+.45)}if(kind==='coin'){tone(784,.09,'square',.11);tone(1175,.22,'square',.10,now+.085)}if(kind==='stomp'){tone(180,.11,'sawtooth',.08);tone(125,.16,'triangle',.09,now+.07)}if(kind==='hurt'){tone(660,.095,'sawtooth',.28,now);tone(185,.22,'square',.25,now+.09);tone(88,.36,'sawtooth',.22,now+.19);tone(910,.075,'square',.15,now+.12)}if(kind==='portal'){for(let i=0;i<6;i++)tone([293.66,349.23,440,587.33,698.46,880][i],.33,'triangle',.12,now+i*.16)}if(kind==='checkpoint'){tone(523,.13,'triangle',.07);tone(784,.22,'triangle',.09,now+.12)}}
 $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=audio.on?'♫ TON AN':'♫ TON AUS';$('audioToggle').setAttribute('aria-label',audio.on?'Ton ausschalten':'Ton einschalten');if(audio.on){A();audio.next=0}};
 
 function rect(x,y,w,h){solid.push({x,y,w,h})}
@@ -114,7 +114,15 @@ p.walk+=Math.abs(p.vx)*.13*dt;
 for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,h:28})){item.taken=true;p.powered=true;toast="RETROBÄLLE FREIGESCHALTET! F / J / FEUER";toastTime=165;sfx("checkpoint");updateHud()}}
 for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y,w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
-for(const e of enemies){if(!e.alive)continue;e.x+=e.dir*(e.type===1?2.0:e.type===2?1.7:1.25)*dt;if(e.x>e.max)e.dir=-1;if(e.x<e.min)e.dir=1;e.phase+=dt*(e.type===2?.22:.13);
+for(const e of enemies){if(!e.alive)continue;
+ const speed=e.type===1?2.0:e.type===2?1.7:1.25;
+ const nextX=e.x+e.dir*speed*dt;
+ // Keep all enemy types on their own stretch of terrain; never cross a deadly gap.
+ const hasGroundAt=x=>solid.some(b=>b.y===ground&&x>=b.x+5&&x<=b.x+b.w-5);
+ const ahead=nextX+(e.dir>0?e.w+5:-5),center=nextX+e.w/2;
+ if(nextX<e.min||nextX>e.max||!hasGroundAt(ahead)||!hasGroundAt(center)){e.dir*=-1}
+ else e.x=nextX;
+ e.phase+=dt*(e.type===2?.22:.13);
  const ey=e.y+(e.type===2?Math.sin(e.phase)*12:0);
  if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
@@ -250,7 +258,27 @@ function avatar(p){
 
  g.restore();
 }
-function draw(){background();for(const b of solid)platform(b);
+function draw(){background();
+ // Vertical ravines: warm pale rock at the opening, fading into deep earthy shadow.
+ const groundBlocks=solid.filter(b=>b.y===ground).sort((a,b)=>a.x-b.x);
+ let end=0;
+ for(const b of groundBlocks){
+  if(b.x>end+1){
+   const x=end-camera,w=b.x-end;
+   if(x<W&&x+w>0){
+    const ravine=g.createLinearGradient(0,ground,0,H);
+    ravine.addColorStop(0,'#b3a18b');ravine.addColorStop(.22,'#857569');
+    ravine.addColorStop(.55,'#524941');ravine.addColorStop(1,'#171b23');
+    g.fillStyle=ravine;g.fillRect(Math.round(x),ground,Math.ceil(w),H-ground);
+    pix(x,ground,Math.min(w,7),11,'#b7a58d');
+    pix(x+w-7,ground,Math.min(w,7),11,'#b7a58d');
+    pix(x+9,ground+20,Math.max(0,w-18),3,'#938374');
+    pix(x+14,ground+41,Math.max(0,w-28),3,'#514b46');
+   }
+  }
+  end=Math.max(end,b.x+b.w);
+ }
+ for(const b of solid)platform(b);
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
 for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===2?Math.sin(e.phase)*12:0);
