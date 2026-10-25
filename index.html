@@ -79,7 +79,7 @@ function avatar(p){
   const bounce=moving&&!inAir?Math.abs(Math.sin(p.walk*1.5))*1.5:0;
   const x=Math.round(p.x-camera-8), y=Math.round(p.y-23-bounce);
   if(inv>0&&Math.floor(inv/5)%2===0)return;
-  g.save();g.translate(x+(p.face<0?45:0),y);g.scale(p.face,1);
+  g.save();g.translate(x+(p.face>0?45:0),y);g.scale(-p.face,1);
   const q=(x,y,w,h,c)=>pix(x,y,w,h,c);
   // dark outline, legs and sneakers (individually articulated)
   const leg1=inAir?-3:stride,leg2=inAir?4:-stride;
