@@ -71,17 +71,51 @@ castle(1140);castle(3200);
 for(let i=0;i<45;i++){let x=i*110+45-camera*.6;if(x<-60||x>W+60)continue;pix(x,393,8,75,'#6b574b');pix(x-21,352,51,53,'#326c5e');pix(x-30,370,67,41,'#3e8665');pix(x-12,337,35,31,'#45916f')}
 }
 function platform(b){if(b.x-camera>W||b.x+b.w-camera<0)return;let x=b.x-camera;pix(x,b.y,b.w,8,'#75a45d');pix(x,b.y+8,b.w,Math.min(82,b.h-8),'#805842');for(let tx=0;tx<b.w;tx+=28){pix(x+tx,b.y+13,2,7,'#ad805a');pix(x+tx+13,b.y+35,9,3,'#654934')}pix(x,b.y, b.w,3,'#b2d076')}
-function avatar(p){const x=Math.round(p.x-camera),y=Math.round(p.y),q=(p.grounded?Math.sin(p.walk)*3:0);if(inv>0&&Math.floor(inv/5)%2===0)return;
-g.save();g.translate(x+(p.face<0?p.w:0),y);g.scale(p.face,1);
-// Boots, jeans and moving legs
-pix(5,31+q,8,9,'#254768');pix(16,31-q,8,9,'#254768');pix(2,39+q,13,5,'#131922');pix(15,39-q,13,5,'#131922');
-pix(4,18,21,16,'#23272d');pix(6,24,17,7,'#161c26');
-// Arms swing
-pix(0,19-q,5,14,'#cf9570');pix(24,19+q,5,14,'#cf9570');pix(0,18-q,5,8,'#20232a');pix(24,18+q,5,8,'#20232a');
-// Neck, beard and face
-pix(10,15,11,5,'#b78060');pix(5,3,19,17,'#d3a17a');pix(6,12,18,9,'#3a251f');pix(9,16,13,5,'#261b1a');pix(17,11,4,2,'#fff2dc');pix(19,11,2,2,'#282321');pix(5,6,2,9,'#5b3830');
-// Dark cap and brim
-pix(4,0,22,7,'#101722');pix(3,5,28,4,'#141d28');pix(7,1,11,2,'#39414d');g.restore()}
+function avatar(p){
+  // Detailed pixel-art character inspired by the supplied Pravium portrait.
+  const moving=Math.abs(p.vx)>.4, inAir=!p.grounded;
+  const gait=moving&&!inAir?Math.sin(p.walk*1.5):0;
+  const stride=moving&&!inAir?Math.round(gait*4):0;
+  const bounce=moving&&!inAir?Math.abs(Math.sin(p.walk*1.5))*1.5:0;
+  const x=Math.round(p.x-camera-8), y=Math.round(p.y-23-bounce);
+  if(inv>0&&Math.floor(inv/5)%2===0)return;
+  g.save();g.translate(x+(p.face<0?45:0),y);g.scale(p.face,1);
+  const q=(x,y,w,h,c)=>pix(x,y,w,h,c);
+  // dark outline, legs and sneakers (individually articulated)
+  const leg1=inAir?-3:stride,leg2=inAir?4:-stride;
+  q(12+leg1,44,10,16,'#152a45');q(22+leg2,44,10,16,'#142944');
+  q(14+leg1,45,7,12,'#37649b');q(24+leg2,45,7,12,'#315a90');
+  q(11+leg1,56,12,6,'#131719');q(22+leg2,56,13,6,'#131719');
+  q(10+leg1,59,15,4,'#77766e');q(22+leg2,59,15,4,'#92918b');
+  q(11+leg1,61,14,2,'#e7e0cb');q(22+leg2,61,15,2,'#e7e0cb');
+  // arms animate independently, avoiding the hands-in-pockets static pose
+  const arm1=inAir?-8:Math.round(-gait*5),arm2=inAir?-10:Math.round(gait*5);
+  q(7,31+arm1,9,18,'#161a21');q(32,31+arm2,9,18,'#171b22');
+  q(8,42+arm1,7,10,'#b36d4b');q(33,42+arm2,7,10,'#b36d4b');
+  q(9,44+arm1,5,7,'#f1a776');q(34,44+arm2,5,7,'#eda372');
+  // body: shirt, seam and jeans waistband
+  q(13,27,23,21,'#11151d');q(16,28,17,16,'#25282e');
+  q(18,33,12,9,'#202329');q(15,45,20,3,'#0b1119');q(18,48,14,2,'#253d6b');
+  // ear and neck
+  q(27,17,11,13,'#a56f53');q(33,20,6,7,'#efaa79');
+  q(18,24,12,8,'#ad714e');
+  // hair, face and cap outline
+  q(13,8,22,20,'#2e2523');q(12,11,22,17,'#cf8052');
+  q(13,13,18,14,'#f2a46f');q(14,12,18,5,'#e99862');
+  q(31,17,5,10,'#eeb087');q(33,19,2,5,'#8b4b36');
+  // brow, eye, nose
+  q(14,17,10,3,'#593625');q(15,20,3,5,'#fcf3d7');
+  q(16,20,2,4,'#242a30');q(11,24,7,3,'#d88c59');
+  q(11,26,8,3,'#71452e');q(9,29,24,11,'#483127');
+  q(10,30,16,7,'#674332');q(11,34,10,6,'#8d6954');
+  q(13,37,12,5,'#aaa092');q(15,41,9,3,'#b3b1a4');
+  q(20,31,9,4,'#5a392a');q(27,29,7,8,'#372923');
+  // cap with angled brim
+  q(9,5,29,8,'#090d14');q(12,3,22,3,'#25262a');q(15,2,18,4,'#3a3b3d');
+  q(8,10,30,7,'#17181e');q(3,13,19,5,'#0e121a');q(1,15,17,3,'#2f3238');
+  q(18,6,7,2,'#55565a');q(31,8,4,5,'#282b31');
+  g.restore();
+}
 function draw(){background();for(const b of solid)platform(b);
 for(const d of decor){let x=d.x-camera;if(x<-15||x>W+15)continue;pix(x,d.y,4,9,'#39784a');pix(x-4,d.y-3,12,6,d.kind?'#ecb9b9':'#e2d18b')}
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
