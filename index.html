@@ -42,6 +42,7 @@ function retroInstrument(freq,at,dur,kind,volume,attack=.012,release=.16){
    if(kind==='brass')v=.57*Math.sin(tw)+.26*Math.sin(2*tw+.4)+.17*Math.sin(3*tw)+.09*Math.sin(5*tw);
    else if(kind==='string')v=.61*Math.sin(tw)+.26*Math.sin(2*tw)+.14*Math.sin(3*tw)+.09*Math.sin(4*tw);
    else if(kind==='bass')v=.82*Math.sin(tw)+.18*Math.sin(2*tw)+.07*Math.sin(3*tw);
+   else if(kind==='guitar')v=.38*Math.sin(tw)+.31*Math.sin(2*tw)+.24*Math.sin(3*tw)+.17*Math.sin(5*tw)+.09*Math.sin(7*tw);
    else v=.75*Math.sin(tw)+.13*Math.sin(2*tw)+.08*Math.sin(4*tw);
    d[i]=Math.round(v*90)/90;
   }
@@ -57,7 +58,7 @@ function retroInstrument(freq,at,dur,kind,volume,attack=.012,release=.16){
  const src=ac.createBufferSource(),env=ac.createGain(),lp=ac.createBiquadFilter();
  src.buffer=retroSamples[kind];src.loop=true;
  src.playbackRate.setValueAtTime(freq*2048/rate,at);
- lp.type='lowpass';lp.frequency.value=kind==='brass'?2600:kind==='bass'?1100:1900;
+ lp.type='lowpass';lp.frequency.value=kind==='brass'?2600:kind==='bass'?1100:kind==='guitar'?3200:1900;
  const end=at+dur;
  env.gain.setValueAtTime(.0001,at);
  env.gain.linearRampToValueAtTime(volume,at+attack);
@@ -70,67 +71,109 @@ function musicVoice(freq,at,dur,type,volume){
  const kind=type==='sawtooth'?(freq<180?'bass':'brass'):'string';
  retroInstrument(freq,at,dur,kind,volume*1.1,.015,.09);
 }
-// Four evolving phrases per world; all music is synthesized on-device without external files.
-const surfaceLead=[
-  220,261.63,293.66,330,392,330,293.66,261.63,220,261.63,293.66,392,440,392,330,293.66,
-  261.63,329.63,392,440,493.88,440,392,329.63,293.66,349.23,392,440,392,349.23,293.66,261.63,
-  220,293.66,329.63,392,440,523.25,493.88,440,392,330,293.66,330,392,440,392,329.63,
-  261.63,293.66,349.23,392,349.23,293.66,261.63,220,196,220,261.63,293.66,261.63,220,196,220];
-const caveLead=[
-  174.61,0,207.65,196,146.83,0,164.81,155.56,130.81,146.83,174.61,0,196,155.56,146.83,0,
-  130.81,155.56,174.61,207.65,233.08,207.65,174.61,155.56,146.83,0,130.81,146.83,164.81,0,155.56,116.54,
-  174.61,207.65,261.63,246.94,207.65,0,196,174.61,155.56,196,233.08,207.65,174.61,155.56,146.83,0,
-  130.81,146.83,155.56,0,174.61,146.83,130.81,116.54,130.81,0,146.83,155.56,130.81,116.54,130.81,0];
+// Original 16-bit rock arrangements: four-bar harmonic journeys, not random notes.
+// Each part has a distinct arc: exploration -> tension -> lift -> resolution.
+const ROCK={
+  surface:{
+    bpm:132,
+    chords:[[110,130.81,164.81],[98,123.47,146.83],[87.31,110,130.81],[98,123.47,164.81],
+      [130.81,164.81,196],[110,138.59,164.81],[98,123.47,146.83],[110,130.81,164.81]],
+    lead:[
+      [329.63,4],[392,2],[440,2],[493.88,4],[440,2],[392,2],
+      [369.99,4],[329.63,4],[293.66,4],[329.63,4],
+      [261.63,4],[329.63,2],[392,2],[440,4],[493.88,4],
+      [523.25,6],[493.88,2],[440,4],[392,4],
+      [329.63,4],[392,2],[440,2],[523.25,4],[587.33,4],
+      [659.25,4],[587.33,2],[523.25,2],[493.88,4],[440,4],
+      [392,6],[329.63,2],[293.66,4],[329.63,4]
+    ]
+  },
+  cave:{
+    bpm:106,
+    chords:[[82.41,98,123.47],[73.42,87.31,110],[65.41,82.41,98],[77.78,92.5,116.54],
+      [82.41,98,123.47],[92.5,110,138.59],[73.42,87.31,110],[82.41,98,123.47]],
+    lead:[
+      [164.81,6],[196,2],[185,4],[164.81,4],
+      [146.83,6],[138.59,2],[123.47,4],[146.83,4],
+      [130.81,8],[164.81,4],[146.83,4],
+      [155.56,6],[185,2],[174.61,4],[155.56,4],
+      [164.81,4],[196,4],[246.94,4],[220,4],
+      [185,6],[220,2],[207.65,4],[185,4],
+      [146.83,8],[164.81,4],[138.59,4],
+      [164.81,6],[146.83,2],[123.47,8]
+    ]
+  }
+};
+function addRockGuitar(freq,at,duration,volume){
+ // Layered detuned sampled strings approximate a crunchy SNES rock guitar.
+ retroInstrument(freq,at,duration,'guitar',volume,.013,.19);
+ retroInstrument(freq*1.005,at+.008,duration*.95,'guitar',volume*.40,.022,.19);
+}
 function musicTick(){
  if(!audio.ctx||!audio.on||scene!=='play'||freezeFrames>0)return;
  const now=audio.ctx.currentTime;
- if(audio.next<now)audio.next=now+.04;
- let n=0;
- while(audio.next<now+.35&&n++<8){
-  const k=audio.step%64,at=audio.next,beat=k%4,phrase=Math.floor(k/16);
-  if(level===2){
-   const note=caveLead[k],pulse=.225;
-   if(note)musicVoice(note,at,pulse*.95,phrase%2?'sawtooth':'triangle',.038);
-   if(beat===0)musicVoice([87.31,77.78,73.42,65.41][Math.floor(k/4)%4],at,.74,'sawtooth',.057);
-   // Whispered high-register responses, only during later phrases.
-   if(phrase>=2&&k%8===6)musicVoice([349.23,311.13,293.66,261.63][Math.floor(k/8)%4],at,.43,'triangle',.020);
-   if(beat===0)drum(84,.20,.063,at);
-   if(beat===2)drum(170,.12,.040,at);
-   if(k%2===0)drum(2100,.024,.008,at);
-   if(k%16===15)retroInstrument(116.54,at,.65,'string',.027);
-   audio.next+=.225;
-  }else{
-   const note=surfaceLead[k],pulse=.1875;
-   musicVoice(note,at,pulse*1.1,phrase===2?'sawtooth':'triangle',phrase===2?.056:.048);
-   const roots=[110,98,87.31,98,130.81,110,98,110,110,130.81,98,110,87.31,98,110,110];
-   if(beat===0)musicVoice(roots[Math.floor(k/4)],at,.42,'sawtooth',.065);
-   if((phrase===1||phrase===3)&&beat===2)musicVoice(note/2,at,.31,'triangle',.027);
-   if(phrase===2&&k%8===4)musicVoice(note*1.5,at,.31,'string',.021);
-   if(beat===0)drum(125,.12,.114,at);
-   if(beat===2)drum(230,.075,.0564,at);
-   drum(2400,.018,.0108,at);
-   audio.next+=pulse;
+ if(audio.next<now)audio.next=now+.035;
+ let loops=0;
+ while(audio.next<now+.30&&loops++<8){
+  const song=level===2?ROCK.cave:ROCK.surface;
+  const beat=60/song.bpm/4; // sixteenth-note sequencing
+  const k=audio.step%128,at=audio.next;
+  const bar=Math.floor(k/16),within=k%16,root=song.chords[bar];
+  const cave=level===2;
+  // Evolving eighth-note bass with syncopated roots, fifths, and little fills.
+  if(k%2===0){
+    const bnote=(within===6||within===14)?root[1]:within===10?root[2]/2:root[0];
+    retroInstrument(bnote,at,beat*(within===0?3.4:1.65),'bass',cave?.080:.092,.008,.11);
   }
-  audio.step++;
+  // Powerful, clearly pitched guitar chords: rhythm changes every phrase.
+  if(within===0||within===7||within===10||(bar>=4&&within===14)){
+    const chordLength=within===0?beat*6:beat*3.5;
+    root.slice(0,2).forEach((n,i)=>addRockGuitar(n*2,at,chordLength,cave?.040:.056-i*.006));
+  }
+  // Melody is composed in connected phrases lasting several notes.
+  const melodicStep=k%128;let pos=0;
+  for(const [freq,units] of song.lead){
+    if(pos===melodicStep){
+      const dur=units*beat;
+      retroInstrument(freq,at,dur*1.12,cave?'string':'brass',cave?.064:.074,.055,Math.min(.36,dur*.35));
+      if(!cave&&bar>=4)retroInstrument(freq/2,at,dur*.97,'string',.027,.065,.20);
+      if(cave&&bar>=4)retroInstrument(freq*1.5,at,dur*.8,'string',.022,.11,.24);
+      break;
+    }
+    pos+=units;
+  }
+  // Distinct rock drum groove; underground gains tom-like ominous pulses.
+  if(within===0||within===8)drum(cave?85:125,.18,cave?.10:.145,at);
+  if(within===4||within===12)drum(cave?170:220,.10,cave?.085:.12,at);
+  if(within%2===0)drum(cave?1900:2500,.027,cave?.012:.022,at);
+  if(within===15)drum(300,.085,cave?.044:.06,at);
+  audio.next+=beat;audio.step++;
  }
 }
 // Short, original tongue-in-cheek 16-bit losing jingle; plays once after the hit sound.
 // Original triumphant 16-bit fanfare: ascending brass-like melody, harmony, bass and final chord.
 function victoryFanfare(){
  if(!audio.ctx||!audio.on)return;
- const base=audio.ctx.currentTime+.09;
- // Original mini-orchestral triumph: heralding brass motif, rising response, full final harmony.
- const melody=[392,523.25,659.25,783.99,698.46,783.99,880,1046.5,987.77,1174.66,1046.5,1318.51];
- const times=[0,.23,.46,.69,1.02,1.25,1.48,1.75,2.03,2.27,2.53,2.82];
- melody.forEach((note,i)=>{
-   retroInstrument(note,base+times[i],i===melody.length-1?.82:.29,'brass',i>=7?.087:.075,.018,.11);
-   if(i%3===0)retroInstrument(note/2,base+times[i],.35,'string',.042,.025,.16);
- });
- [130.81,164.81,196,261.63].forEach((note,i)=>retroInstrument(note,base+i*.7,.62,'bass',.064,.022,.25));
- const end=base+3.12;
+ const start=audio.ctx.currentTime+.06;
+ // Joined, singable victory theme with legato note overlap and broad chord swells.
+ const line=[
+ [392,0,.53],[523.25,.45,.65],[587.33,1.04,.52],[659.25,1.50,.82],
+ [587.33,2.24,.50],[659.25,2.67,.57],[783.99,3.17,1.04],
+ [698.46,4.08,.48],[783.99,4.49,.58],[880,5.01,.58],[1046.5,5.52,1.68]];
+ for(const [pitch,at,dur] of line){
+   retroInstrument(pitch,start+at,dur,'brass',.076,.07,Math.min(.38,dur*.42));
+   retroInstrument(pitch/2,start+at,dur*.96,'string',.033,.09,Math.min(.35,dur*.4));
+ }
+ const harmony=[[130.81,0,1.45],[174.61,1.5,1.5],[196,3.17,1.8],[261.63,5.52,1.7]];
+ for(const [note,at,dur] of harmony){
+   retroInstrument(note,start+at,dur,'bass',.065,.06,.35);
+   [note*2,note*2.5,note*3].forEach((ch,i)=>
+     retroInstrument(ch,start+at,dur,'string',.022+i*.003,.14,.43));
+ }
+ const climax=start+5.52;
  [130.81,261.63,329.63,392,523.25,659.25,783.99,1046.5].forEach((note,i)=>
-   retroInstrument(note,end,1.22,i===0?'bass':i%2?'brass':'string',i===0?.09:.071,.035,.52));
- drum(110,.24,.11,end);drum(150,.28,.09,end+.10);
+  retroInstrument(note,climax,1.86,i===0?'bass':i%2?'brass':'string',i===0?.082:.055,.13,.85));
+ drum(130,.24,.12,start);drum(180,.17,.08,start+1.5);drum(130,.28,.12,climax);
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
@@ -283,7 +326,7 @@ for(const e of enemies){if(!e.alive)continue;
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
-if(p.x>portal-30){if(level===1){scene='interlude';transitionFrames=290;audio.next=0;victoryFanfare();toast='LEVEL 1-1 GESCHAFFT!';toastTime=290}else{scene='win';victoryFanfare();show('UNTERGRUND GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
+if(p.x>portal-30){if(level===1){scene='interlude';transitionFrames=455;audio.next=0;victoryFanfare();toast='LEVEL 1-1 GESCHAFFT!';toastTime=455}else{scene='win';victoryFanfare();show('UNTERGRUND GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
 camera+=(Math.max(0,Math.min(worldW-W,p.x-300))-camera)*Math.min(1,.12*dt);
 for(const v of particles){v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=.2*dt;v.life-=dt}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1)}
 function castle(x,scale=1){let sx=(x-camera*.28)*scale;let by=405;pix(sx,by-110,145,170,'#73829b');pix(sx+20,by-145,32,45,'#64758b');pix(sx+92,by-145,32,45,'#64758b');for(let i=0;i<4;i++){pix(sx+i*43,by-162,20,20,'#64758b');pix(sx+i*43+5,by-183,10,24,'#8b8796')}pix(sx+57,by-58,40,70,'#374764');pix(sx+30,by-98,13,27,'#b9d6d9');pix(sx+104,by-98,13,27,'#b9d6d9')}
