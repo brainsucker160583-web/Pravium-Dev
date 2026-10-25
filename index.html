@@ -81,18 +81,31 @@ function avatar(p){
   if(inv>0&&Math.floor(inv/5)%2===0)return;
   g.save();g.translate(x+(p.face>0?45:0),y);g.scale(-p.face,1);
   const q=(x,y,w,h,c)=>pix(x,y,w,h,c);
-  // dark outline, legs and sneakers (individually articulated)
-  const leg1=inAir?-3:stride,leg2=inAir?4:-stride;
-  q(12+leg1,44,10,16,'#152a45');q(22+leg2,44,10,16,'#142944');
-  q(14+leg1,45,7,12,'#37649b');q(24+leg2,45,7,12,'#315a90');
-  q(11+leg1,56,12,6,'#131719');q(22+leg2,56,13,6,'#131719');
-  q(10+leg1,59,15,4,'#77766e');q(22+leg2,59,15,4,'#92918b');
-  q(11+leg1,61,14,2,'#e7e0cb');q(22+leg2,61,15,2,'#e7e0cb');
-  // arms animate independently, avoiding the hands-in-pockets static pose
-  const arm1=inAir?-8:Math.round(-gait*5),arm2=inAir?-10:Math.round(gait*5);
-  q(7,31+arm1,9,18,'#161a21');q(32,31+arm2,9,18,'#171b22');
-  q(8,42+arm1,7,10,'#b36d4b');q(33,42+arm2,7,10,'#b36d4b');
-  q(9,44+arm1,5,7,'#f1a776');q(34,44+arm2,5,7,'#eda372');
+  // Two clear alternating steps rather than a sideways penguin shuffle.
+  // Each foot has a planted phase, lift phase and forward swing.
+  const phase=moving&&!inAir?p.walk*1.5:0;
+  function leg(cx,offset,front){
+    const wave=Math.sin(phase+offset),lift=moving&&!inAir?Math.max(0,-Math.cos(phase+offset))*5:0;
+    const dx=inAir?(front?5:-5):moving?Math.round(wave*6):0;
+    const hip=cx,ankle=cx+dx;
+    // Slight knee articulation; both pants and shoe follow the stride.
+    const knee=cx+Math.round(dx*.45)+(inAir?(front?2:-2):0);
+    q(hip,44,10,6,'#193b64');
+    q(knee,49,10,8,'#315a91');
+    q(ankle,55-lift,10,5,'#244977');
+    q(ankle-2,59-lift,14,4,'#11171c');
+    q(ankle-3,61-lift,16,3,'#6b6b67');
+    q(ankle-3,63-lift,16,2,'#e9e0d1');
+  }
+  // Rear leg first, then near leg in front for visual depth.
+  leg(23,Math.PI,false);
+  leg(13,0,true);
+  // Opposite arm swing, with minimal vertical motion.
+  const armSwing=moving&&!inAir?Math.round(Math.sin(phase)*5):0;
+  const arm1=inAir?-5:-armSwing,arm2=inAir?-8:armSwing;
+  q(7,31+arm1,8,17,'#161a21');q(33,31+arm2,8,17,'#171b22');
+  q(8,43+arm1,6,9,'#b36d4b');q(34,43+arm2,6,9,'#b36d4b');
+  q(9,45+arm1,5,7,'#f1a776');q(35,45+arm2,5,7,'#eda372');
   // body: shirt, seam and jeans waistband
   q(13,27,23,21,'#11151d');q(16,28,17,16,'#25282e');
   q(18,33,12,9,'#202329');q(15,45,20,3,'#0b1119');q(18,48,14,2,'#253d6b');
