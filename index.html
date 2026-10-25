@@ -3,13 +3,13 @@
 <title>Pravium – Chroniken der Zeit</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#111725;color:#fff;font-family:system-ui,sans-serif;overflow:hidden}#wrap{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}h1{font-size:clamp(16px,3vw,25px);margin:0;color:#f7df95;text-shadow:2px 2px #5b3335}#frame{position:relative;width:min(100%,1100px);aspect-ratio:16/9;border:4px solid #8c6d50;box-shadow:0 0 0 4px #292e41,0 12px 50px #0009;background:#93cbd4}canvas{width:100%;height:100%;display:block;image-rendering:pixelated}#hud{position:absolute;left:10px;top:9px;right:10px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;font-size:clamp(12px,2.1vw,19px);font-weight:900;text-shadow:2px 2px #1c253b}#message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#111a2bd6;text-align:center;padding:18px}#message.hidden{display:none}.panel{border:4px solid #dcc17e;background:#25364d;padding:19px;max-width:580px;box-shadow:7px 7px #101620}.panel h2{color:#f4d683;margin:0 0 8px;font-size:clamp(20px,4vw,35px)}.panel p{line-height:1.5}.panel button{font:900 18px system-ui;background:#f3ca72;border:3px solid #6c4339;padding:10px 28px;color:#273142;cursor:pointer}#touch{display:flex;width:min(100%,1100px);justify-content:space-between;touch-action:none;user-select:none;gap:15px}#touch button{min-width:69px;min-height:61px;font:900 24px system-ui;color:white;background:#384c6d;border:3px solid #a8b9cc;border-radius:13px;touch-action:none}#touch button:active,.pressed{background:#7e8659!important}#touch .right{display:flex;gap:12px}#hint{margin:0;color:#c6d0dc;font-size:12px;text-align:center}@media(min-width:900px) and (pointer:fine){#touch{display:none}}@media(max-height:550px){h1,#hint{display:none}#wrap{gap:2px}#frame{max-height:75dvh;width:auto;max-width:100%}#touch button{min-height:44px}}
-</style></head><body><div id="wrap"><h1>PRAVIUM – CHRONIKEN DER ZEIT</h1><div id="frame"><canvas id="game" width="960" height="540" aria-label="Jump-and-Run-Spiel"></canvas><div id="hud"><span id="lives">♥ ♥ ♥</span><span id="coins">◆ 0 / 0</span><span id="era">ZEITALTER I · MITTELALTER</span></div><button id="audioToggle" aria-label="Ton ausschalten" style="position:absolute;right:10px;bottom:10px;z-index:3;background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:800">♫ TON AN</button><div id="message"><div class="panel"><h2 id="mtitle">PRAVIUM – CHRONIKEN DER ZEIT</h2><p id="mbody">Ein kleines Retro-Abenteuer durch die Jahrhunderte. Sammle Münzen, weiche Gegnern aus und erreiche das leuchtende Zeitportal!</p><button id="start">SPIELEN</button></div></div></div><div id="touch"><div class="right"><button data-key="left" aria-label="Links">◀</button><button data-key="right" aria-label="Rechts">▶</button></div><div class="right"><button data-key="jump" aria-label="Springen">▲ SPRUNG</button></div></div><p id="hint">PC: A/D oder ←/→ bewegen · Leertaste/W/↑ springen · R neu starten · P Pause · Mobil: Touch-Buttons</p></div>
+</style></head><body><div id="wrap"><h1>PRAVIUM – CHRONIKEN DER ZEIT</h1><div id="frame"><canvas id="game" width="960" height="540" aria-label="Jump-and-Run-Spiel"></canvas><div id="hud"><span id="lives">♥ ♥ ♥</span><span id="coins">◆ 0 / 0</span><span id="era">ZEITALTER I · MITTELALTER</span></div><button id="audioToggle" aria-label="Ton ausschalten" style="position:absolute;right:10px;bottom:10px;z-index:3;background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:800">♫ TON AN</button><div id="message"><div class="panel"><h2 id="mtitle">PRAVIUM – CHRONIKEN DER ZEIT</h2><p id="mbody">Ein kleines Retro-Abenteuer durch die Jahrhunderte. Sammle Münzen, weiche Gegnern aus und erreiche das leuchtende Zeitportal!</p><button id="start">SPIELEN</button></div></div></div><div id="touch"><div class="right"><button data-key="left" aria-label="Links">◀</button><button data-key="right" aria-label="Rechts">▶</button></div><div class="right"><button data-key="jump" aria-label="Springen">▲ SPRUNG</button><button data-key="fire" aria-label="Retroball schießen">● FEUER</button></div></div><p id="hint">PC: A/D oder ←/→ bewegen · Leertaste/W/↑ springen · F/J Retroball schießen · R neu starten · P Pause · Mobil: Touch-Buttons</p></div>
 <script>
 'use strict';
 const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=960,H=540,worldW=4300,ground=460;
-const keys={left:false,right:false,jump:false},solid=[],coins=[],enemies=[],particles=[],decor=[];
-let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,portal=4150;
+const keys={left:false,right:false,jump:false,fire:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[];
+let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,portal=4150;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,next:0,step:0,timer:null};
 const A=()=>{if(!audio.ctx){try{audio.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return}}if(audio.ctx.state==='suspended')audio.ctx.resume();if(!audio.timer)audio.timer=setInterval(musicTick,110)};
@@ -25,29 +25,29 @@ $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=au
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
 function foe(x,y,min,max){enemies.push({x,y,min,max,dir:1,alive:true,phase:Math.random()*7})}
-function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
+function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;shotCooldown=0;wasFire=false;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
 [[310,385,135],[570,318,150],[795,363,125],[1090,403,175],[1360,345,145],[1620,295,150],[1920,388,140],[2170,324,145],[2460,360,130],[2730,390,160],[3000,326,160],[3320,359,160],[3600,395,180],[3900,350,150]].forEach(a=>rect(a[0],a[1],a[2],20));
 [[200,412],[355,343],[410,343],[625,275],[827,322],[1140,360],[1405,304],[1670,255],[1980,344],[2240,283],[2520,318],[2790,345],[3060,285],[3380,315],[3660,350],[3970,308],[4065,403]].forEach(a=>money(...a));total=coins.length;
-[[680,428,600,860],[1450,428,1350,1610],[2090,428,1920,2260],[2920,428,2760,3110],[3750,428,3590,4020]].forEach(a=>foe(...a));
+[[680,414,600,860],[1450,414,1350,1610],[2090,414,1920,2260],[2920,414,2760,3110],[3750,414,3590,4020]].forEach(a=>foe(...a));
 for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
-player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0};
+powerups.push({x:375,y:357,taken:false},{x:1675,y:266,taken:false},{x:3055,y:295,taken:false});player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:false};
 updateHud()}
-function updateHud(){$('lives').textContent='♥ '.repeat(lives);$('coins').textContent='◆ '+score+' / '+total}
+function updateHud(){$('era').textContent='ZEITALTER I · MITTELALTER'+(player&&player.powered?' · ● RETROBÄLLE':'');$('lives').textContent='♥ '.repeat(lives);$('coins').textContent='◆ '+score+' / '+total}
 function show(title,body,button){$('mtitle').textContent=title;$('mbody').textContent=body;$('start').textContent=button;$('message').classList.remove('hidden')}
 function hide(){$('message').classList.add('hidden')}
 $('start').onclick=()=>{A();restart();scene='play';hide()};
-document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup',' ','w','a','d'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k===' '||k==='arrowup'||k==='w')keys.jump=true;if(k==='r'){restart();scene='play';hide()}if(k==='p'&&scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(k==='p'&&scene==='pause'){scene='play';hide()}});
-document.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k===' '||k==='arrowup'||k==='w')keys.jump=false});
+document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup',' ','w','a','d'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k===' '||k==='arrowup'||k==='w')keys.jump=true;if(k==='f'||k==='j')keys.fire=true;if(k==='r'){restart();scene='play';hide()}if(k==='p'&&scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(k==='p'&&scene==='pause'){scene='play';hide()}});
+document.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k===' '||k==='arrowup'||k==='w')keys.jump=false;if(k==='f'||k==='j')keys.fire=false});
 document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();keys[k]=true;b.classList.add('pressed')},off=e=>{e.preventDefault();keys[k]=false;b.classList.remove('pressed')};b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off)});
-window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=false});
+window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=keys.fire=false});
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function pix(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)}
 function puff(x,y,col,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*5-1,life:25+Math.random()*20,color:col})}
 function hurt(){if(inv>0)return;sfx('hurt');lives--;updateHud();puff(player.x+12,player.y+22,'#f5a080',14);inv=95;if(lives<=0){scene='dead';show('GAME OVER','Keine Sorge – ein weiterer Versuch kostet nichts.','NOCHMAL');return}player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;toast='Autsch! Zurück zum Kontrollpunkt';toastTime=85}
 function step(dt){if(scene!=='play')return;t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
-const p=player;let ax=(keys.right?1:0)-(keys.left?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
+const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if(keys.fire&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('coin')}wasFire=keys.fire;let ax=(keys.right?1:0)-(keys.left?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
 if(keys.jump&&!wasJump)p.jumpBuffer=9;wasJump=keys.jump;p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.coyote=Math.max(0,p.coyote-dt);
 if(p.jumpBuffer&&p.coyote){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
 if(!keys.jump&&p.vy< -4)p.vy=-4;
@@ -55,9 +55,11 @@ p.x+=p.vx*dt;p.x=Math.max(0,Math.min(worldW-p.w,p.x));for(const b of solid)if(hi
 p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}
 if(p.y>H+100)hurt();
 p.walk+=Math.abs(p.vx)*.13*dt;
+for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,h:28})){item.taken=true;p.powered=true;toast="RETROBÄLLE FREIGESCHALTET! F / J / FEUER";toastTime=165;sfx("checkpoint");updateHud()}}
+for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y,w:40,h:46})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
 for(const e of enemies){if(!e.alive)continue;e.x+=e.dir*1.25*dt;if(e.x>e.max)e.dir=-1;if(e.x<e.min)e.dir=1;e.phase+=dt*.13;
-if(hit(p,{x:e.x,y:e.y,w:29,h:28})){if(p.vy>1&&p.y+p.h<e.y+18){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+14,e.y+14,'#b8df7e',14);sfx('stomp')}else hurt()}}
+if(hit(p,{x:e.x,y:e.y,w:40,h:46})){if(p.vy>1&&p.y+p.h<e.y+24){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+14,e.y+14,'#b8df7e',14);sfx('stomp')}else hurt()}}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
 if(p.x>portal-30){sfx('portal');scene='win';show('ZEITPORTAL ERREICHT!','Du hast das Mittelalter geschafft und '+score+' von '+total+' Münzen gesammelt. Die Industrialisierung folgt in einem späteren Level.','ERNEUT SPIELEN')}
@@ -78,11 +80,14 @@ function sceneryHill(x,base,w,h,main,shade){
  for(let j=8;j<w-8;j+=8){let q=(j-w/2)/(w/2),top=base-Math.round(h*Math.pow(Math.max(0,1-q*q),.74)/8)*8;g.fillRect(Math.round(x+j),top,8,base-top)}
  
 }
-function sceneryTree(x,y,size=1){
+function sceneryTree(x,y,size=1,depth=0){
  const q=(a,b,w,h,c)=>pix(Math.round(x+a*size),Math.round(y+b*size),Math.round(w*size),Math.round(h*size),c);
- q(-6,-2,12,59,'#584b41');q(-3,8,5,46,'#aa8058');
+ const trunkWidth=[11,16,22][depth];const trunkColor=['#645347','#56463c','#403d35'][depth];
+ q(-trunkWidth/2,-4,trunkWidth,64,trunkColor);q(-trunkWidth/2+3,6,4,43,'#ae8058');
+ q(-trunkWidth/2-7,12,9,6,trunkColor);q(trunkWidth/2-1,0,12,6,trunkColor);
  q(-31,-37,62,31,'#224f50');q(-25,-59,50,28,'#286a58');q(-17,-74,34,25,'#397d5f');
  q(-28,-32,53,13,'#4a936a');q(-18,-54,39,9,'#65a878');q(-9,-68,23,7,'#75b682');
+ q(-23,-44,12,7,'#488f69');q(6,-61,12,6,'#82bb86');q(-13,-29,23,6,'#82b77e');
  
 }
 function background(){
@@ -91,8 +96,11 @@ function background(){
  g.fillStyle=grad;g.fillRect(0,0,W,H);
  // Soft pixel sun and sparse, varied clouds in the farthest plane.
  const sunX=760-camera*.035;
- pix(sunX-14,73,88,88,'#eddca8');pix(sunX-6,81,72,72,'#ffe9ae');pix(sunX+10,96,40,40,'#fff1c8');
- for(let i=-1;i<12;i++){let x=i*204+35-camera*.115,y=72+(i*53%98);sceneryCloud(x,y,i%3===0?1.2:.78)}
+ // Pixel-rounded sun with layered light and warm center.
+ for(let yy=-42;yy<=42;yy+=4){const half=Math.floor(Math.sqrt(42*42-yy*yy)/4)*4;pix(sunX-half,118+yy,half*2+4,4,'#f3d99b')}
+ for(let yy=-33;yy<=33;yy+=3){const half=Math.floor(Math.sqrt(33*33-yy*yy)/3)*3;pix(sunX-half,118+yy,half*2+3,3,'#ffe6a6')}
+ for(let yy=-23;yy<=23;yy+=3){const half=Math.floor(Math.sqrt(23*23-yy*yy)/3)*3;pix(sunX-half,118+yy,half*2+3,3,'#fff3c4')}
+ for(let i=-1;i<12;i++){let x=i*204+35-camera*.115,y=72+(i*53%98);sceneryCloud(x,y,1)}
  // Rolling foothills and ridge bands with independent parallax.
  for(let i=-2;i<10;i++){let x=i*260-(camera*.18%260);sceneryHill(x,420,315,165,'#91b7a4','#7ca59c')}
  for(let i=-2;i<13;i++){let x=i*176-(camera*.34%176);sceneryHill(x,455,230,106,'#659a83','#538875')}
@@ -100,7 +108,7 @@ function background(){
  // Woodland silhouettes with varying size, layered in front of the hills.
  for(let i=-1;i<38;i++){
    let x=i*105+35-camera*.56;if(x<-85||x>W+85)continue;
-   sceneryTree(x,392+(i%3)*7,.72+(i%4)*.11);
+   sceneryTree(x,392+(i%3)*7,1,i%3);
  }
 
 }
@@ -184,7 +192,9 @@ function avatar(p){
 function draw(){background();for(const b of solid)platform(b);
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
-for(const e of enemies){if(!e.alive)continue;let x=e.x-camera,y=e.y+Math.sin(e.phase)*2;pix(x+2,y+7,25,19,'#445949');pix(x+5,y+1,19,15,'#68885c');pix(x+7,y+5,5,5,'#ffdfad');pix(x+18,y+5,5,5,'#ffdfad');pix(x+9,y+7,2,3,'#26352b');pix(x+20,y+7,2,3,'#26352b');pix(x+3,y+21,7,6,'#2a3a34');pix(x+19,y+21,7,6,'#2a3a34')}
+for(const e of enemies){if(!e.alive)continue;let x=e.x-camera,y=e.y+Math.sin(e.phase)*2;pix(x+3,y+10,34,30,'#405a4e');pix(x+6,y+3,28,30,'#62865c');pix(x+10,y,20,10,'#7b9f70');pix(x+10,y+13,7,7,'#ffdfad');pix(x+25,y+13,7,7,'#ffdfad');pix(x+12,y+16,3,4,'#26352b');pix(x+27,y+16,3,4,'#26352b');pix(x+5,y+36,12,10,'#2a3a34');pix(x+24,y+36,12,10,'#2a3a34')}
+for(const item of powerups){if(item.taken)continue;const x=item.x-camera,y=item.y+Math.sin(t*.075)*4;pix(x-14,y-14,28,28,'#34415f');pix(x-11,y-11,22,22,'#ddb65b');pix(x-7,y-7,14,14,'#4e77b7');pix(x-3,y-3,6,6,'#eaf4ff')}
+for(const b of shots){let x=b.x-camera,y=b.y;pix(x-7,y-7,14,14,'#233c74');pix(x-5,y-5,10,10,'#65bde1');pix(x-2,y-2,4,4,'#fff2ad')}
 for(const x of [1100,2670]){pix(x-camera,ground-64,7,64,'#d7c494');pix(x-camera+4,ground-70,22,16,checkpoint>=x?'#e9d070':'#a7b9cf')}
 let px=portal-camera;pix(px-12,ground-128,80,128,'#3a4864');pix(px,ground-117,56,117,'#a46ce4');pix(px+9,ground-104,38,104,'#6ed6dc');for(let i=0;i<9;i++)pix(px+6+Math.sin(t*.06+i)*18+20,ground-108+i*12,5,7,'#fff5b5');
 avatar(player);
