@@ -131,15 +131,23 @@ function avatar(p){
    const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
    // Upper 37px of the approved standing frame, stopping at the waist.
    g.drawImage(img,0,0,40,37,-28,-74,56,49);
-   // Compact natural jump: trailing foot stays near the hips, leading knee lifts.
-   px(-9,-27,10,13,'#193c69');px(-13,-17,11,9,'#315e91');
-   px(-15,-10,13,5,'#131923');px(-15,-6,13,2,'#dedad0');
-   px(5,-28,12,11,'#204773');px(10,-34,12,11,'#35669e');
-   px(14,-27,10,9,'#244b7c');px(15,-20,13,5,'#151921');
-   px(15,-16,13,2,'#e3ddd0');
-   // One raised fist makes the airborne silhouette readable at game scale.
-   px(20,-49,7,12,'#171c26');px(21,-54,7,8,'#d79564');
-   px(22,-55,5,4,'#efa875');
+   // One connected, compact airborne silhouette. Both feet stay close.
+   // Back thigh and tucked shin (behind the leading leg).
+   px(-12,-27,11,12,'#193c69');
+   px(-15,-18,11,9,'#315e91');
+   px(-16,-10,13,5,'#131923');
+   px(-16,-6,13,2,'#dedad0');
+   // Leading knee raised modestly, shin bent downward instead of a split.
+   px(2,-28,12,12,'#204773');
+   px(8,-25,11,10,'#35669e');
+   px(10,-17,10,7,'#244b7c');
+   px(9,-10,13,5,'#151921');
+   px(9,-6,13,2,'#e3ddd0');
+   // Bent arm joined to the existing shoulder, not a floating fist.
+   px(17,-45,8,8,'#171c26');
+   px(20,-42,8,7,'#171c26');
+   px(23,-46,7,7,'#d79564');
+   px(24,-47,5,3,'#efa875');
  }else{
    // A planted frame alternates with an extended one at a steady rhythm.
    // Keep feet near the ground, avoiding the pronounced penguin bounce.
