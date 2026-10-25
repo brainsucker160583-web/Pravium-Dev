@@ -111,23 +111,31 @@ spriteSheet.addEventListener('load',()=>{
  ctx.putImageData(im,0,0);cleanedSprite=off;
 });
 function avatar(p){
- const dx=Math.round(p.x-camera-16),dy=Math.round(p.y-30);
  if(inv>0&&Math.floor(inv/5)%2===0)return;
  if(!spriteSheet.complete||!spriteSheet.naturalWidth)return;
  const img=cleanedSprite||spriteSheet;
  const moving=Math.abs(p.vx)>.55,air=!p.grounded;
- // Use only complete sprite frames. The third image cropped the cap.
- // During a jump cycle alternate a dynamic takeoff pose and an upright apex pose.
- const runPhase=p.walk*.44;const frame=air?(Math.abs(p.vy)>3?1:0):(moving?(Math.sin(runPhase)>0?1:0):0);
- const angle=air?(p.vy<0?-0.10:0.075):0;
- const stretch=air?(p.vy<0?1.055:.96):1;
- const squat=moving&&!air?Math.round(Math.abs(Math.sin(runPhase))*1):0;
- g.save();
- g.translate(dx+28,dy+74);
+ const phase=p.walk*.44;
+ // Preserve the good idle sprite. The low, crouched running frame is NOT
+ // a general-purpose jump image; using it in mid-air made him look squashed.
+ const frame=air?0:(moving?(Math.sin(phase)>-.25?1:0):0);
+ const width=56,height=74;
+ const dx=Math.round(p.x-camera-16),dy=Math.round(p.y-30);
+ const bob=moving&&!air?Math.round(Math.abs(Math.sin(phase))*1.5):0;
+ g.save();g.translate(dx+width/2,dy+height);
  if(p.face<0)g.scale(-1,1);
- g.rotate(angle);
- g.scale(1,stretch);
- g.drawImage(img,frame*40,0,40,56,-28,-74+squat,56,74);
+ if(air){
+   // Distinct airborne pose: upright body, forward tilt on takeoff, lean back
+   // on descent. No vertical squash or missing cap.
+   g.rotate(p.vy< -2?-.095:p.vy>2?.07:0);
+   g.drawImage(img,0,0,40,56,-width/2,-height,width,height);
+   // Small movement strokes, kept OUTSIDE the character silhouette.
+   if(Math.abs(p.vy)>3){g.fillStyle='#e5d9ba';g.fillRect(-22,0,7,2);g.fillRect(12,2,7,2)}
+ }else{
+   // A planted frame alternates with an extended one at a steady rhythm.
+   // Keep feet near the ground, avoiding the pronounced penguin bounce.
+   g.drawImage(img,frame*40,0,40,56,-width/2,-height-bob,width,height);
+ }
  g.restore();
 }
 function draw(){background();for(const b of solid)platform(b);
