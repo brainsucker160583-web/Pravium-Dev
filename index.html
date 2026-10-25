@@ -125,12 +125,22 @@ function avatar(p){
  g.save();g.translate(dx+width/2,dy+height);
  if(p.face<0)g.scale(-1,1);
  if(air){
-   // Distinct airborne pose: upright body, forward tilt on takeoff, lean back
-   // on descent. No vertical squash or missing cap.
-   g.rotate(p.vy< -2?-.095:p.vy>2?.07:0);
-   g.drawImage(img,0,0,40,56,-width/2,-height,width,height);
-   // Small movement strokes, kept OUTSIDE the character silhouette.
-   if(Math.abs(p.vy)>3){g.fillStyle='#e5d9ba';g.fillRect(-22,0,7,2);g.fillRect(12,2,7,2)}
+   // Separate jump silhouette: retain original head, cap, beard and torso,
+   // but replace the standing legs with a bent leading knee and trailing leg.
+   g.rotate(p.vy< -2?-.065:p.vy>2?.045:0);
+   const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
+   // Upper 37px of the approved standing frame, stopping at the waist.
+   g.drawImage(img,0,0,40,37,-28,-74,56,49);
+   // Back leg extends diagonally behind.
+   px(-15,-27,10,11,'#193c69');px(-20,-21,11,9,'#315e91');
+   px(-26,-15,13,6,'#131923');px(-27,-11,15,3,'#dedad0');
+   // Leading knee is raised ahead of the body.
+   px(7,-27,13,10,'#204773');px(13,-32,13,11,'#35669e');
+   px(19,-27,11,8,'#244b7c');px(21,-21,13,6,'#151921');
+   px(21,-16,14,3,'#e3ddd0');
+   // One raised fist makes the airborne silhouette readable at game scale.
+   px(20,-49,7,12,'#171c26');px(21,-54,7,8,'#d79564');
+   px(22,-55,5,4,'#efa875');
  }else{
    // A planted frame alternates with an extended one at a steady rhythm.
    // Keep feet near the ground, avoiding the pronounced penguin bounce.
