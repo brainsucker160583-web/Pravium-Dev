@@ -71,68 +71,17 @@ castle(1140);castle(3200);
 for(let i=0;i<45;i++){let x=i*110+45-camera*.6;if(x<-60||x>W+60)continue;pix(x,393,8,75,'#6b574b');pix(x-21,352,51,53,'#326c5e');pix(x-30,370,67,41,'#3e8665');pix(x-12,337,35,31,'#45916f')}
 }
 function platform(b){if(b.x-camera>W||b.x+b.w-camera<0)return;let x=b.x-camera;pix(x,b.y,b.w,8,'#75a45d');pix(x,b.y+8,b.w,Math.min(82,b.h-8),'#805842');for(let tx=0;tx<b.w;tx+=28){pix(x+tx,b.y+13,2,7,'#ad805a');pix(x+tx+13,b.y+35,9,3,'#654934')}pix(x,b.y, b.w,3,'#b2d076')}
+const spriteSheet=new Image();spriteSheet.src='data:image/png;base64,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';
 function avatar(p){
-  // Detailed pixel-art character inspired by the supplied Pravium portrait.
-  const moving=Math.abs(p.vx)>.4, inAir=!p.grounded;
-  const gait=moving&&!inAir?Math.sin(p.walk*1.5):0;
-  const stride=moving&&!inAir?Math.round(gait*4):0;
-  const bounce=moving&&!inAir?Math.abs(Math.sin(p.walk*1.5))*1.5:0;
-  const x=Math.round(p.x-camera-8), y=Math.round(p.y-23-bounce);
-  if(inv>0&&Math.floor(inv/5)%2===0)return;
-  g.save();g.translate(x+(p.face>0?45:0),y);g.scale(-p.face,1);
-  const q=(x,y,w,h,c)=>pix(x,y,w,h,c);
-  // Two clear alternating steps rather than a sideways penguin shuffle.
-  // Each foot has a planted phase, lift phase and forward swing.
-  const phase=moving&&!inAir?p.walk*1.5:0;
-  function leg(cx,offset,front){
-    const wave=Math.sin(phase+offset),lift=moving&&!inAir?Math.max(0,-Math.cos(phase+offset))*5:0;
-    const dx=inAir?(front?5:-5):moving?Math.round(wave*6):0;
-    const hip=cx,ankle=cx+dx;
-    // Slight knee articulation; both pants and shoe follow the stride.
-    const knee=cx+Math.round(dx*.45)+(inAir?(front?2:-2):0);
-    q(hip,44,10,6,'#193b64');
-    q(knee,49,10,8,'#315a91');
-    q(ankle,55-lift,10,5,'#244977');
-    q(ankle-2,59-lift,14,4,'#11171c');
-    q(ankle-3,61-lift,16,3,'#6b6b67');
-    q(ankle-3,63-lift,16,2,'#e9e0d1');
-  }
-  // Rear leg first, then near leg in front for visual depth.
-  leg(23,Math.PI,false);
-  leg(13,0,true);
-  // Opposite arm swing, with minimal vertical motion.
-  const armSwing=moving&&!inAir?Math.round(Math.sin(phase)*5):0;
-  const arm1=inAir?-5:-armSwing,arm2=inAir?-8:armSwing;
-  q(7,31+arm1,8,17,'#161a21');q(33,31+arm2,8,17,'#171b22');
-  q(8,43+arm1,6,9,'#b36d4b');q(34,43+arm2,6,9,'#b36d4b');
-  q(9,45+arm1,5,7,'#f1a776');q(35,45+arm2,5,7,'#eda372');
-  // body: shirt, seam and jeans waistband
-  q(13,27,23,21,'#11151d');q(16,28,17,16,'#25282e');
-  q(18,33,12,9,'#202329');q(15,45,20,3,'#0b1119');q(18,48,14,2,'#253d6b');
-  // High-contrast enlarged facial silhouette, with recognizable cap and salt-and-pepper beard.
-  q(27,17,11,14,'#70462f'); // ear silhouette
-  q(30,18,8,11,'#e3a06f');q(34,21,3,4,'#a66547');
-  q(18,26,12,7,'#b57952'); // neck
-  q(12,9,23,22,'#483026'); // hair outline
-  q(11,12,23,19,'#b97750');
-  q(13,13,20,15,'#f0a16b');
-  q(13,17,4,9,'#e58c59'); // nose ridge
-  q(9,23,9,5,'#dc8b5b');q(9,26,6,3,'#a85f42'); // nose projection
-  q(13,17,11,3,'#38271f'); // bold eyebrow
-  q(14,20,7,7,'#fcf2da');q(15,20,3,6,'#252628');q(15,20,1,2,'#fff8ed');
-  q(24,19,6,3,'#70452d'); // further eyebrow/temple
-  q(20,26,12,4,'#6e402c'); // moustache
-  q(12,28,23,12,'#352925'); // dark beard outer shape
-  q(10,28,12,6,'#4b3127');q(14,32,17,8,'#694638');
-  q(10,33,12,8,'#7a5a4a');q(11,37,13,6,'#aea59a'); // grey beard tips
-  q(16,40,10,5,'#c6bcb0');q(23,38,8,5,'#8f8276');
-  q(27,30,8,8,'#412c27');q(20,30,8,2,'#a56b50'); // beard profile
-  // Cap, brim facing the direction of movement.
-  q(9,5,29,9,'#080c13');q(13,2,20,5,'#292b30');
-  q(17,3,13,2,'#56565a');q(9,10,29,6,'#17191f');
-  q(3,13,20,5,'#0c1119');q(1,15,16,3,'#36383d');
-  q(28,9,9,5,'#22252a');
-  g.restore();
+ const dx=Math.round(p.x-camera-16),dy=Math.round(p.y-30);
+ if(inv>0&&Math.floor(inv/5)%2===0)return;
+ if(!spriteSheet.complete||!spriteSheet.naturalWidth)return;
+ const moving=Math.abs(p.vx)>.55;
+ const frame=!p.grounded?2:moving?(Math.floor(p.walk*.32)%2?1:0):0;
+ g.save();
+ if(p.face<0){g.translate(dx+56,0);g.scale(-1,1);g.drawImage(spriteSheet,frame*40,0,40,56,0,dy,56,74)}
+ else g.drawImage(spriteSheet,frame*40,0,40,56,dx,dy,56,74);
+ g.restore();
 }
 function draw(){background();for(const b of solid)platform(b);
 for(const d of decor){let x=d.x-camera;if(x<-15||x>W+15)continue;pix(x,d.y,4,9,'#39784a');pix(x-4,d.y-3,12,6,d.kind?'#ecb9b9':'#e2d18b')}
