@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Pravium – Chroniken der Zeit</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111725;color:#fff;font-family:system-ui,sans-serif;overflow:hidden}#wrap{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}h1{font-size:clamp(16px,3vw,25px);margin:0;color:#f7df95;text-shadow:2px 2px #5b3335}#frame{position:relative;width:min(100%,1100px);aspect-ratio:16/9;border:4px solid #8c6d50;box-shadow:0 0 0 4px #292e41,0 12px 50px #0009;background:#93cbd4}canvas{width:100%;height:100%;display:block;image-rendering:pixelated}#hud{position:absolute;left:10px;top:9px;right:10px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;font-size:clamp(12px,2.1vw,19px);font-weight:900;text-shadow:2px 2px #1c253b}#message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#111a2bd6;text-align:center;padding:18px}#message.hidden{display:none}.panel{border:4px solid #dcc17e;background:#25364d;padding:19px;max-width:580px;box-shadow:7px 7px #101620}.panel h2{color:#f4d683;margin:0 0 8px;font-size:clamp(20px,4vw,35px)}.panel p{line-height:1.5}.panel button{font:900 18px system-ui;background:#f3ca72;border:3px solid #6c4339;padding:10px 28px;color:#273142;cursor:pointer}#touch{display:flex;width:min(100%,1100px);justify-content:space-between;touch-action:none;user-select:none;gap:15px}#touch button{min-width:69px;min-height:61px;font:900 24px system-ui;color:white;background:#384c6d;border:3px solid #a8b9cc;border-radius:13px;touch-action:none}#touch button:active,.pressed{background:#7e8659!important}#touch .right{display:flex;gap:12px}#hint{margin:0;color:#c6d0dc;font-size:12px;text-align:center}@media(min-width:900px) and (pointer:fine){#touch{display:none}}@media(max-height:550px){h1,#hint{display:none}#wrap{gap:2px}#frame{max-height:75dvh;width:auto;max-width:100%}#touch button{min-height:44px}}
+</style></head><body><div id="wrap"><h1>PRAVIUM – CHRONIKEN DER ZEIT</h1><div id="frame"><canvas id="game" width="960" height="540" aria-label="Jump-and-Run-Spiel"></canvas><div id="hud"><span id="lives">♥ ♥ ♥</span><span id="coins">◆ 0 / 0</span><span id="era">ZEITALTER I · MITTELALTER</span></div><div id="message"><div class="panel"><h2 id="mtitle">PRAVIUM – CHRONIKEN DER ZEIT</h2><p id="mbody">Ein kleines Retro-Abenteuer durch die Jahrhunderte. Sammle Münzen, weiche Gegnern aus und erreiche das leuchtende Zeitportal!</p><button id="start">SPIELEN</button></div></div></div><div id="touch"><div class="right"><button data-key="left" aria-label="Links">◀</button><button data-key="right" aria-label="Rechts">▶</button></div><div class="right"><button data-key="jump" aria-label="Springen">▲ SPRUNG</button></div></div><p id="hint">PC: A/D oder ←/→ bewegen · Leertaste/W/↑ springen · R neu starten · P Pause · Mobil: Touch-Buttons</p></div>
+<script>
+'use strict';
+const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
+const W=960,H=540,worldW=4300,ground=460;
+const keys={left:false,right:false,jump:false},solid=[],coins=[],enemies=[],particles=[],decor=[];
+let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,portal=4150;
+const $=id=>document.getElementById(id);
+function rect(x,y,w,h){solid.push({x,y,w,h})}
+function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
+function foe(x,y,min,max){enemies.push({x,y,min,max,dir:1,alive:true,phase:Math.random()*7})}
+function restart(){solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;score=0;lives=3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
+let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
+[[310,385,135],[570,318,150],[795,363,125],[1090,403,175],[1360,345,145],[1620,295,150],[1920,388,140],[2170,324,145],[2460,360,130],[2730,390,160],[3000,326,160],[3320,359,160],[3600,395,180],[3900,350,150]].forEach(a=>rect(a[0],a[1],a[2],20));
+[[200,412],[355,343],[410,343],[625,275],[827,322],[1140,360],[1405,304],[1670,255],[1980,344],[2240,283],[2520,318],[2790,345],[3060,285],[3380,315],[3660,350],[3970,308],[4065,403]].forEach(a=>money(...a));total=coins.length;
+[[680,428,600,860],[1450,428,1350,1610],[2090,428,1920,2260],[2920,428,2760,3110],[3750,428,3590,4020]].forEach(a=>foe(...a));
+for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
+player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0};
+updateHud()}
+function updateHud(){$('lives').textContent='♥ '.repeat(lives);$('coins').textContent='◆ '+score+' / '+total}
+function show(title,body,button){$('mtitle').textContent=title;$('mbody').textContent=body;$('start').textContent=button;$('message').classList.remove('hidden')}
+function hide(){$('message').classList.add('hidden')}
+$('start').onclick=()=>{restart();scene='play';hide()};
+document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup',' ','w','a','d'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k===' '||k==='arrowup'||k==='w')keys.jump=true;if(k==='r'){restart();scene='play';hide()}if(k==='p'&&scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(k==='p'&&scene==='pause'){scene='play';hide()}});
+document.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k===' '||k==='arrowup'||k==='w')keys.jump=false});
+document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;const on=e=>{e.preventDefault();keys[k]=true;b.classList.add('pressed')},off=e=>{e.preventDefault();keys[k]=false;b.classList.remove('pressed')};b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off)});
+window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=false});
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function pix(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)}
+function puff(x,y,col,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*5-1,life:25+Math.random()*20,color:col})}
+function hurt(){if(inv>0)return;lives--;updateHud();puff(player.x+12,player.y+22,'#f5a080',14);inv=95;if(lives<=0){scene='dead';show('GAME OVER','Keine Sorge – ein weiterer Versuch kostet nichts.','NOCHMAL');return}player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;toast='Autsch! Zurück zum Kontrollpunkt';toastTime=85}
+function step(dt){if(scene!=='play')return;t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
+const p=player;let ax=(keys.right?1:0)-(keys.left?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
+if(keys.jump&&!wasJump)p.jumpBuffer=9;wasJump=keys.jump;p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.coyote=Math.max(0,p.coyote-dt);
+if(p.jumpBuffer&&p.coyote){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5)}
+if(!keys.jump&&p.vy< -4)p.vy=-4;
+p.x+=p.vx*dt;p.x=Math.max(0,Math.min(worldW-p.w,p.x));for(const b of solid)if(hit(p,b)){if(p.vx>0)p.x=b.x-p.w;else if(p.vx<0)p.x=b.x+b.w;p.vx=0}
+p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}
+if(p.y>H+100)hurt();
+p.walk+=Math.abs(p.vx)*.13*dt;
+for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);updateHud()}
+for(const e of enemies){if(!e.alive)continue;e.x+=e.dir*1.25*dt;if(e.x>e.max)e.dir=-1;if(e.x<e.min)e.dir=1;e.phase+=dt*.13;
+if(hit(p,{x:e.x,y:e.y,w:29,h:28})){if(p.vy>1&&p.y+p.h<e.y+18){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+14,e.y+14,'#b8df7e',14)}else hurt()}}
+if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
+if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
+if(p.x>portal-30){scene='win';show('ZEITPORTAL ERREICHT!','Du hast das Mittelalter geschafft und '+score+' von '+total+' Münzen gesammelt. Die Industrialisierung folgt in einem späteren Level.','ERNEUT SPIELEN')}
+camera+=(Math.max(0,Math.min(worldW-W,p.x-300))-camera)*Math.min(1,.12*dt);
+for(const v of particles){v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=.2*dt;v.life-=dt}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1)}
+function castle(x,scale=1){let sx=(x-camera*.28)*scale;let by=405;pix(sx,by-110,145,170,'#73829b');pix(sx+20,by-145,32,45,'#64758b');pix(sx+92,by-145,32,45,'#64758b');for(let i=0;i<4;i++){pix(sx+i*43,by-162,20,20,'#64758b');pix(sx+i*43+5,by-183,10,24,'#8b8796')}pix(sx+57,by-58,40,70,'#374764');pix(sx+30,by-98,13,27,'#b9d6d9');pix(sx+104,by-98,13,27,'#b9d6d9')}
+function background(){let grad=g.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#779cc4');grad.addColorStop(.7,'#cde1cf');grad.addColorStop(1,'#f5dab0');g.fillStyle=grad;g.fillRect(0,0,W,H);
+pix(775-camera*.06,65,53,53,'#f6e4b1');
+for(let i=0;i<18;i++){let x=i*260+60-(camera*.12%260),y=80+(i*47%110);pix(x,y,66,18,'#eef1e0');pix(x+16,y-12,41,19,'#eef1e0');pix(x+40,y+5,42,12,'#eef1e0')}
+g.fillStyle='#8caa9a';for(let i=-1;i<12;i++){let x=i*170-(camera*.18%170);g.beginPath();g.moveTo(x,425);g.lineTo(x+85,190+(i*37%65));g.lineTo(x+210,425);g.fill()}
+g.fillStyle='#5e8f79';for(let i=-1;i<18;i++){let x=i*115-(camera*.37%115);g.beginPath();g.moveTo(x,454);g.lineTo(x+70,320+(i*27%60));g.lineTo(x+148,454);g.fill()}
+castle(1140);castle(3200);
+for(let i=0;i<45;i++){let x=i*110+45-camera*.6;if(x<-60||x>W+60)continue;pix(x,393,8,75,'#6b574b');pix(x-21,352,51,53,'#326c5e');pix(x-30,370,67,41,'#3e8665');pix(x-12,337,35,31,'#45916f')}
+}
+function platform(b){if(b.x-camera>W||b.x+b.w-camera<0)return;let x=b.x-camera;pix(x,b.y,b.w,8,'#75a45d');pix(x,b.y+8,b.w,Math.min(82,b.h-8),'#805842');for(let tx=0;tx<b.w;tx+=28){pix(x+tx,b.y+13,2,7,'#ad805a');pix(x+tx+13,b.y+35,9,3,'#654934')}pix(x,b.y, b.w,3,'#b2d076')}
+function avatar(p){const x=Math.round(p.x-camera),y=Math.round(p.y),q=(p.grounded?Math.sin(p.walk)*3:0);if(inv>0&&Math.floor(inv/5)%2===0)return;
+g.save();g.translate(x+(p.face<0?p.w:0),y);g.scale(p.face,1);
+// Boots, jeans and moving legs
+pix(5,31+q,8,9,'#254768');pix(16,31-q,8,9,'#254768');pix(2,39+q,13,5,'#131922');pix(15,39-q,13,5,'#131922');
+pix(4,18,21,16,'#23272d');pix(6,24,17,7,'#161c26');
+// Arms swing
+pix(0,19-q,5,14,'#cf9570');pix(24,19+q,5,14,'#cf9570');pix(0,18-q,5,8,'#20232a');pix(24,18+q,5,8,'#20232a');
+// Neck, beard and face
+pix(10,15,11,5,'#b78060');pix(5,3,19,17,'#d3a17a');pix(6,12,18,9,'#3a251f');pix(9,16,13,5,'#261b1a');pix(17,11,4,2,'#fff2dc');pix(19,11,2,2,'#282321');pix(5,6,2,9,'#5b3830');
+// Dark cap and brim
+pix(4,0,22,7,'#101722');pix(3,5,28,4,'#141d28');pix(7,1,11,2,'#39414d');g.restore()}
+function draw(){background();for(const b of solid)platform(b);
+for(const d of decor){let x=d.x-camera;if(x<-15||x>W+15)continue;pix(x,d.y,4,9,'#39784a');pix(x-4,d.y-3,12,6,d.kind?'#ecb9b9':'#e2d18b')}
+for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
+for(const e of enemies){if(!e.alive)continue;let x=e.x-camera,y=e.y+Math.sin(e.phase)*2;pix(x+2,y+7,25,19,'#445949');pix(x+5,y+1,19,15,'#68885c');pix(x+7,y+5,5,5,'#ffdfad');pix(x+18,y+5,5,5,'#ffdfad');pix(x+9,y+7,2,3,'#26352b');pix(x+20,y+7,2,3,'#26352b');pix(x+3,y+21,7,6,'#2a3a34');pix(x+19,y+21,7,6,'#2a3a34')}
+for(const x of [1100,2670]){pix(x-camera,ground-64,7,64,'#d7c494');pix(x-camera+4,ground-70,22,16,checkpoint>=x?'#e9d070':'#a7b9cf')}
+let px=portal-camera;pix(px-12,ground-128,80,128,'#3a4864');pix(px,ground-117,56,117,'#a46ce4');pix(px+9,ground-104,38,104,'#6ed6dc');for(let i=0;i<9;i++)pix(px+6+Math.sin(t*.06+i)*18+20,ground-108+i*12,5,7,'#fff5b5');
+avatar(player);
+for(const v of particles)pix(v.x-camera,v.y,4,4,v.color);
+if(toastTime){g.font='bold 21px system-ui';g.textAlign='center';g.fillStyle='#1e3044';g.fillRect(265,91,430,42);g.fillStyle='#ffe7a2';g.fillText(toast,W/2,120)}
+}
+function loop(now){if(!last)last=now;let dt=Math.min(2.2,(now-last)/16.6667);last=now;step(dt);draw();requestAnimationFrame(loop)}
+restart();requestAnimationFrame(loop);
+</script></body></html>
