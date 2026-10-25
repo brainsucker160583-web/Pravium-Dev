@@ -131,13 +131,12 @@ function avatar(p){
    const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
    // Upper 37px of the approved standing frame, stopping at the waist.
    g.drawImage(img,0,0,40,37,-28,-74,56,49);
-   // Back leg extends diagonally behind.
-   px(-15,-27,10,11,'#193c69');px(-20,-21,11,9,'#315e91');
-   px(-26,-15,13,6,'#131923');px(-27,-11,15,3,'#dedad0');
-   // Leading knee is raised ahead of the body.
-   px(7,-27,13,10,'#204773');px(13,-32,13,11,'#35669e');
-   px(19,-27,11,8,'#244b7c');px(21,-21,13,6,'#151921');
-   px(21,-16,14,3,'#e3ddd0');
+   // Compact natural jump: trailing foot stays near the hips, leading knee lifts.
+   px(-9,-27,10,13,'#193c69');px(-13,-17,11,9,'#315e91');
+   px(-15,-10,13,5,'#131923');px(-15,-6,13,2,'#dedad0');
+   px(5,-28,12,11,'#204773');px(10,-34,12,11,'#35669e');
+   px(14,-27,10,9,'#244b7c');px(15,-20,13,5,'#151921');
+   px(15,-16,13,2,'#e3ddd0');
    // One raised fist makes the airborne silhouette readable at game scale.
    px(20,-49,7,12,'#171c26');px(21,-54,7,8,'#d79564');
    px(22,-55,5,4,'#efa875');
