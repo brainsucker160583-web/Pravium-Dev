@@ -14,9 +14,11 @@ const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,next:0,step:0,timer:null};
 const A=()=>{if(!audio.ctx){try{audio.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return}}if(audio.ctx.state==='suspended')audio.ctx.resume();if(!audio.timer)audio.timer=setInterval(musicTick,110)};
 function tone(freq,dur=.17,type='square',vol=.09,when=0){if(!audio.ctx||!audio.on)return;const ac=audio.ctx,start=Math.max(ac.currentTime,when||ac.currentTime),o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.setValueAtTime(freq,start);v.gain.setValueAtTime(.0001,start);v.gain.exponentialRampToValueAtTime(Math.max(.001,vol),start+.012);v.gain.exponentialRampToValueAtTime(.0001,start+dur);o.connect(v).connect(ac.destination);o.start(start);o.stop(start+dur+.03)}
-const notes=[293.66,349.23,440,392,349.23,293.66,261.63,293.66,349.23,440,523.25,440,392,349.23,293.66,261.63,220,261.63,293.66,349.23,392,349.23,293.66,261.63,246.94,293.66,349.23,293.66,261.63,220,196,220];
-const bass=[146.83,146.83,130.81,130.81,110,110,123.47,123.47];
-function musicTick(){if(!audio.ctx||!audio.on||scene!=='play')return;let now=audio.ctx.currentTime;if(audio.next<now)audio.next=now+.05;let n=0;while(audio.next<now+.4&&n++<6){const k=audio.step%notes.length;const at=audio.next;tone(notes[k],.23,'square',.047,at);if(k%2===0)tone(bass[Math.floor(k/4)%8],.35,'triangle',.082,at);if(k%4===0)tone(notes[k]/2,.42,'triangle',.037,at+.035);audio.next+=.285;audio.step++}}
+// Driving original 16-bit rock loop with rhythmic bass and retro drums.
+const notes=[220,220,261.63,293.66,330,293.66,261.63,220,196,220,261.63,293.66,392,330,293.66,261.63,220,220,261.63,293.66,330,392,440,392,330,293.66,261.63,220,196,174.61,196,220];
+const bass=[110,110,98,98,87.31,87.31,98,98];
+function drum(freq,dur,vol,at){if(!audio.ctx||!audio.on)return;const ac=audio.ctx,o=ac.createOscillator(),v=ac.createGain();o.type='triangle';o.frequency.setValueAtTime(freq,at);o.frequency.exponentialRampToValueAtTime(Math.max(45,freq*.35),at+dur);v.gain.setValueAtTime(vol,at);v.gain.exponentialRampToValueAtTime(.001,at+dur);o.connect(v).connect(ac.destination);o.start(at);o.stop(at+dur+.01)}
+function musicTick(){if(!audio.ctx||!audio.on||scene!=='play')return;const now=audio.ctx.currentTime;if(audio.next<now)audio.next=now+.04;let n=0;while(audio.next<now+.35&&n++<8){const k=audio.step%notes.length,at=audio.next,beat=k%4;if(k%2===0)tone(notes[k],.16,'sawtooth',.038,at);else tone(notes[k],.09,'square',.034,at);if(beat===0||beat===2)tone(bass[Math.floor(k/4)%8],.23,'sawtooth',.056,at);if(beat===0)drum(125,.12,.095,at);if(beat===2)drum(230,.075,.047,at);drum(2400,.018,.009,at);audio.next+=.1875;audio.step++}}
 function sfx(kind){if(!audio.ctx||!audio.on)return;const now=audio.ctx.currentTime;if(kind==='jump'){tone(330,.08,'square',.075);tone(440,.13,'square',.07,now+.07)}if(kind==='coin'){tone(784,.09,'square',.11);tone(1175,.22,'square',.10,now+.085)}if(kind==='stomp'){tone(180,.11,'sawtooth',.08);tone(125,.16,'triangle',.09,now+.07)}if(kind==='hurt'){tone(175,.24,'sawtooth',.13);tone(110,.28,'sawtooth',.08,now+.12)}if(kind==='portal'){for(let i=0;i<6;i++)tone([293.66,349.23,440,587.33,698.46,880][i],.33,'triangle',.12,now+i*.16)}if(kind==='checkpoint'){tone(523,.13,'triangle',.07);tone(784,.22,'triangle',.09,now+.12)}}
 $('audioToggle').onclick=()=>{audio.on=!audio.on;$('audioToggle').textContent=audio.on?'♫ TON AN':'♫ TON AUS';$('audioToggle').setAttribute('aria-label',audio.on?'Ton ausschalten':'Ton einschalten');if(audio.on){A();audio.next=0}};
 
@@ -131,23 +133,14 @@ function avatar(p){
    const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
    // Upper 37px of the approved standing frame, stopping at the waist.
    g.drawImage(img,0,0,40,37,-28,-74,56,49);
-   // One connected, compact airborne silhouette. Both feet stay close.
-   // Back thigh and tucked shin (behind the leading leg).
-   px(-12,-27,11,12,'#193c69');
-   px(-15,-18,11,9,'#315e91');
-   px(-16,-10,13,5,'#131923');
-   px(-16,-6,13,2,'#dedad0');
-   // Leading knee raised modestly, shin bent downward instead of a split.
-   px(2,-28,12,12,'#204773');
-   px(8,-25,11,10,'#35669e');
-   px(10,-17,10,7,'#244b7c');
-   px(9,-10,13,5,'#151921');
-   px(9,-6,13,2,'#e3ddd0');
-   // Bent arm joined to the existing shoulder, not a floating fist.
-   px(17,-45,8,8,'#171c26');
-   px(20,-42,8,7,'#171c26');
-   px(23,-46,7,7,'#d79564');
-   px(24,-47,5,3,'#efa875');
+   // Restored the previous airborne silhouette.
+   px(-9,-27,10,13,'#193c69');px(-13,-17,11,9,'#315e91');
+   px(-15,-10,13,5,'#131923');px(-15,-6,13,2,'#dedad0');
+   px(5,-28,12,11,'#204773');px(10,-34,12,11,'#35669e');
+   px(14,-27,10,9,'#244b7c');px(15,-20,13,5,'#151921');
+   px(15,-16,13,2,'#e3ddd0');
+   px(20,-49,7,12,'#171c26');px(21,-54,7,8,'#d79564');
+   px(22,-55,5,4,'#efa875');
  }else{
    // A planted frame alternates with an extended one at a steady rhythm.
    // Keep feet near the ground, avoiding the pronounced penguin bounce.
