@@ -9,7 +9,7 @@
 const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=960,H=540,worldW=4300,ground=460;
 const keys={left:false,right:false,jump:false,fire:false},pad={left:false,right:false,jump:false,fire:false,start:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[],rotors=[];
-let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,powerHit=false,portal=4150,level=1;
+let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,powerHit=false,portal=4150,level=1,transitionFrames=0;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,next:0,step:0,timer:null,master:null};
 const A=()=>{if(!audio.ctx){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;audio.ctx=new C()}catch(e){return}}if(!audio.master){audio.master=audio.ctx.createGain();audio.master.connect(audio.ctx.destination)}if(audio.ctx.state!=='running'){audio.ctx.resume().then(()=>{audio.next=0}).catch(()=>{})}if(!audio.timer)audio.timer=setInterval(musicTick,110)};
@@ -70,45 +70,67 @@ function musicVoice(freq,at,dur,type,volume){
  const kind=type==='sawtooth'?(freq<180?'bass':'brass'):'string';
  retroInstrument(freq,at,dur,kind,volume*1.1,.015,.09);
 }
+// Four evolving phrases per world; all music is synthesized on-device without external files.
+const surfaceLead=[
+  220,261.63,293.66,330,392,330,293.66,261.63,220,261.63,293.66,392,440,392,330,293.66,
+  261.63,329.63,392,440,493.88,440,392,329.63,293.66,349.23,392,440,392,349.23,293.66,261.63,
+  220,293.66,329.63,392,440,523.25,493.88,440,392,330,293.66,330,392,440,392,329.63,
+  261.63,293.66,349.23,392,349.23,293.66,261.63,220,196,220,261.63,293.66,261.63,220,196,220];
+const caveLead=[
+  174.61,0,207.65,196,146.83,0,164.81,155.56,130.81,146.83,174.61,0,196,155.56,146.83,0,
+  130.81,155.56,174.61,207.65,233.08,207.65,174.61,155.56,146.83,0,130.81,146.83,164.81,0,155.56,116.54,
+  174.61,207.65,261.63,246.94,207.65,0,196,174.61,155.56,196,233.08,207.65,174.61,155.56,146.83,0,
+  130.81,146.83,155.56,0,174.61,146.83,130.81,116.54,130.81,0,146.83,155.56,130.81,116.54,130.81,0];
 function musicTick(){
  if(!audio.ctx||!audio.on||scene!=='play'||freezeFrames>0)return;
  const now=audio.ctx.currentTime;
  if(audio.next<now)audio.next=now+.04;
  let n=0;
  while(audio.next<now+.35&&n++<8){
-  const k=audio.step%notes.length,at=audio.next,beat=k%4;
+  const k=audio.step%64,at=audio.next,beat=k%4,phrase=Math.floor(k/16);
   if(level===2){
-   const dark=[174.61,207.65,196,146.83,164.81,155.56,130.81,146.83,
-   174.61,196,207.65,196,155.56,146.83,130.81,116.54];
-   const n=dark[audio.step%dark.length];
-   musicVoice(n,at,.29,'triangle',.031);
-   if(k%4===0)musicVoice(n/2,at,.65,'sawtooth',.037);
-   if(k%8===4)drum(85,.19,.052,at);
-   if(k%4===2)drum(190,.08,.025,at);
-   if(k%2===0)drum(1800,.025,.005,at);
-   audio.next+=.235;audio.step++;continue;
+   const note=caveLead[k],pulse=.225;
+   if(note)musicVoice(note,at,pulse*.95,phrase%2?'sawtooth':'triangle',.038);
+   if(beat===0)musicVoice([87.31,77.78,73.42,65.41][Math.floor(k/4)%4],at,.74,'sawtooth',.057);
+   // Whispered high-register responses, only during later phrases.
+   if(phrase>=2&&k%8===6)musicVoice([349.23,311.13,293.66,261.63][Math.floor(k/8)%4],at,.43,'triangle',.020);
+   if(beat===0)drum(84,.20,.063,at);
+   if(beat===2)drum(170,.12,.040,at);
+   if(k%2===0)drum(2100,.024,.008,at);
+   if(k%16===15)retroInstrument(116.54,at,.65,'string',.027);
+   audio.next+=.225;
+  }else{
+   const note=surfaceLead[k],pulse=.1875;
+   musicVoice(note,at,pulse*1.1,phrase===2?'sawtooth':'triangle',phrase===2?.056:.048);
+   const roots=[110,98,87.31,98,130.81,110,98,110,110,130.81,98,110,87.31,98,110,110];
+   if(beat===0)musicVoice(roots[Math.floor(k/4)],at,.42,'sawtooth',.065);
+   if((phrase===1||phrase===3)&&beat===2)musicVoice(note/2,at,.31,'triangle',.027);
+   if(phrase===2&&k%8===4)musicVoice(note*1.5,at,.31,'string',.021);
+   if(beat===0)drum(125,.12,.114,at);
+   if(beat===2)drum(230,.075,.0564,at);
+   drum(2400,.018,.0108,at);
+   audio.next+=pulse;
   }
-  // Connected melody: notes overlap slightly and retain a natural decay.
-  musicVoice(notes[k],at,.224,k%4===0?'sawtooth':'triangle',k%4===0?.039:.044);
-  if(beat===0||beat===2)musicVoice(bass[Math.floor(k/4)%8],at,.33,'sawtooth',.055);
-  // Preserve the original 160 BPM rhythm and percussion volumes.
-  if(beat===0)drum(125,.12,.114,at);
-  if(beat===2)drum(230,.075,.0564,at);
-  drum(2400,.018,.0108,at);
-  audio.next+=.1875;audio.step++;
+  audio.step++;
  }
 }
 // Short, original tongue-in-cheek 16-bit losing jingle; plays once after the hit sound.
 // Original triumphant 16-bit fanfare: ascending brass-like melody, harmony, bass and final chord.
 function victoryFanfare(){
  if(!audio.ctx||!audio.on)return;
- const base=audio.ctx.currentTime+.08,step=.145;
- // One clean ascending C-major scale, immediately followed by a final chord.
- const scale=[523.25,587.33,659.25,698.46,783.99,880,987.77,1046.5];
- scale.forEach((n,i)=>retroInstrument(n,base+i*step,step*.99,'brass',.088,.012,.04));
- const end=base+scale.length*step;
- [261.63,523.25,659.25,783.99,1046.5].forEach((n,i)=>
-  retroInstrument(n,end,.86,i===0?'bass':i%2?'string':'brass',i===0?.085:.062,.035,.28));
+ const base=audio.ctx.currentTime+.09;
+ // Original mini-orchestral triumph: heralding brass motif, rising response, full final harmony.
+ const melody=[392,523.25,659.25,783.99,698.46,783.99,880,1046.5,987.77,1174.66,1046.5,1318.51];
+ const times=[0,.23,.46,.69,1.02,1.25,1.48,1.75,2.03,2.27,2.53,2.82];
+ melody.forEach((note,i)=>{
+   retroInstrument(note,base+times[i],i===melody.length-1?.82:.29,'brass',i>=7?.087:.075,.018,.11);
+   if(i%3===0)retroInstrument(note/2,base+times[i],.35,'string',.042,.025,.16);
+ });
+ [130.81,164.81,196,261.63].forEach((note,i)=>retroInstrument(note,base+i*.7,.62,'bass',.064,.022,.25));
+ const end=base+3.12;
+ [130.81,261.63,329.63,392,523.25,659.25,783.99,1046.5].forEach((note,i)=>
+   retroInstrument(note,end,1.22,i===0?'bass':i%2?'brass':'string',i===0?.09:.071,.035,.52));
+ drum(110,.24,.11,end);drum(150,.28,.09,end+.10);
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
@@ -233,7 +255,7 @@ function finishHit(){
  else{player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;toast='Autsch! Zurück zum Kontrollpunkt';toastTime=85}
  deathPending=false;powerHit=false;
 }
-function step(dt){if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
+function step(dt){if(scene==='interlude'){transitionFrames-=dt;if(transitionFrames<=0){restart(2,true);scene='play';toast='LEVEL 1-2 · UNTERGRUND';toastTime=180}return}if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
 const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
 if((keys.jump||pad.jump)&&!wasJump)p.jumpBuffer=9;wasJump=keys.jump||pad.jump;p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.coyote=Math.max(0,p.coyote-dt);
 if(p.jumpBuffer&&p.coyote){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
@@ -261,7 +283,7 @@ for(const e of enemies){if(!e.alive)continue;
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
-if(p.x>portal-30){if(level===1){restart(2,true);toast='LEVEL 1-2 · UNTERGRUND';toastTime=180;sfx('checkpoint')}else{scene='win';victoryFanfare();show('UNTERGRUND GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
+if(p.x>portal-30){if(level===1){scene='interlude';transitionFrames=290;audio.next=0;victoryFanfare();toast='LEVEL 1-1 GESCHAFFT!';toastTime=290}else{scene='win';victoryFanfare();show('UNTERGRUND GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
 camera+=(Math.max(0,Math.min(worldW-W,p.x-300))-camera)*Math.min(1,.12*dt);
 for(const v of particles){v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=.2*dt;v.life-=dt}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1)}
 function castle(x,scale=1){let sx=(x-camera*.28)*scale;let by=405;pix(sx,by-110,145,170,'#73829b');pix(sx+20,by-145,32,45,'#64758b');pix(sx+92,by-145,32,45,'#64758b');for(let i=0;i<4;i++){pix(sx+i*43,by-162,20,20,'#64758b');pix(sx+i*43+5,by-183,10,24,'#8b8796')}pix(sx+57,by-58,40,70,'#374764');pix(sx+30,by-98,13,27,'#b9d6d9');pix(sx+104,by-98,13,27,'#b9d6d9')}
