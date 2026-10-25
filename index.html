@@ -47,9 +47,20 @@ function pix(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.roun
 function puff(x,y,col,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*5-1,life:25+Math.random()*20,color:col})}
 function hurt(){if(inv>0||freezeFrames>0)return;
  lives--;updateHud();deathPending=lives<=0;inv=95;
- // Hit-stop: game and every scheduled sound become silent immediately.
+ // Punchy impact (90 ms), followed by complete silence during hit-stop.
  freezeFrames=35;
- if(audio.master)audio.master.gain.setValueAtTime(0,audio.ctx.currentTime);
+ if(audio.ctx&&audio.master){
+  const at=audio.ctx.currentTime;
+  audio.master.gain.cancelScheduledValues(at);
+  audio.master.gain.setValueAtTime(audio.on?1:0,at);
+  if(audio.on){
+   tone(270,.065,'sawtooth',.31,at);
+   tone(95,.09,'square',.29,at);
+   tone(680,.045,'square',.17,at+.017);
+  }
+  audio.master.gain.setValueAtTime(audio.on?1:0,at+.083);
+  audio.master.gain.setValueAtTime(0,at+.095);
+ }
 }
 function finishHit(){
  freezeFrames=0;
