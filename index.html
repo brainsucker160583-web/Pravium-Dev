@@ -438,8 +438,22 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
    snapGain.gain.setValueAtTime(.0001,at);
    snapGain.gain.linearRampToValueAtTime(.95,at+.003);
    snapGain.gain.exponentialRampToValueAtTime(.001,at+snapDuration);
-   snapSrc.connect(snapFilter).connect(snapGain).connect(audio.sfxGain);
+   // Saturation adds loudness and bite without a dangerous 5x output boost.
+   const snapDrive=ac.createWaveShaper(),curve=new Float32Array(1024);
+   for(let i=0;i<curve.length;i++){const x=i/(curve.length-1)*2-1;curve[i]=Math.tanh(x*4)/Math.tanh(4)}
+   snapDrive.curve=curve;snapDrive.oversample='2x';
+   snapSrc.connect(snapFilter).connect(snapDrive).connect(snapGain).connect(audio.sfxGain);
    snapSrc.start(at);snapSrc.stop(at+snapDuration);
+   // Short low-mid body reinforces the crack on speakers as well as headphones.
+   const bodyOsc=ac.createOscillator(),bodyGain=ac.createGain();
+   bodyOsc.type='triangle';
+   bodyOsc.frequency.setValueAtTime(185,at);
+   bodyOsc.frequency.exponentialRampToValueAtTime(78,at+.07);
+   bodyGain.gain.setValueAtTime(.0001,at);
+   bodyGain.gain.linearRampToValueAtTime(.38,at+.004);
+   bodyGain.gain.exponentialRampToValueAtTime(.001,at+.075);
+   bodyOsc.connect(bodyGain).connect(audio.sfxGain);
+   bodyOsc.start(at);bodyOsc.stop(at+.08);
    const buffer=ac.createBuffer(1,count,ac.sampleRate),data=buffer.getChannelData(0);
    let smooth=0;
    for(let i=0;i<count;i++){
