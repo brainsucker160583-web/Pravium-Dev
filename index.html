@@ -639,19 +639,27 @@ function avatar(p){
  g.save();g.translate(dx+width/2,dy+height);
  if(p.face<0)g.scale(-1,1);
  if(p.crouching){
-   // Draw a true bent-knee crawl silhouette without squashing the head.
-   // Use the original sprite's head and upper body at their natural proportions.
+   // Readable low crawl: cap and face sit clearly above a forward-leaning torso.
+   // Legs fold underneath rather than swallowing the head into the trousers.
    const stride=moving?Math.sin(phase)*3:0;
    const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
-   // Horizontal boots, shins and folded knees.
-   px(-20,-7,17,5,'#171c26');px(-18,-10,12,5,'#315e91');
-   px(5+stride,-7,19,5,'#171c26');px(8+stride,-12,12,7,'#315e91');
-   px(-12,-19,23,13,'#244b7c');px(-9,-22,18,7,'#35669e');
-   // Original cap, face and beard remain fully sized; torso leans forward.
-   g.drawImage(img,0,0,40,24,-23,-44,42,25);
-   // Bent supporting arm reaches toward the floor while crawling.
-   px(13,-22,8,12,'#244b7c');px(16+stride,-11,8,7,'#d79564');
-   px(15+stride,-5,11,4,'#171c26');
+   // Rear knee, trailing shin and both boots stay below the upper body.
+   px(-20,-12,13,9,'#315e91');
+   px(-23,-6,17,6,'#171c26');
+   px(-7,-13,16,10,'#315e91');
+   px(5+stride,-8,19,8,'#171c26');
+   px(7+stride,-14,12,7,'#315e91');
+   // Distinct shirt and shoulder angled forward with a visible waist.
+   px(-15,-29,22,15,'#244b7c');
+   px(-12,-31,18,6,'#35669e');
+   px(-11,-16,15,4,'#18263a');
+   // Neck and original full-size cap/face, raised ABOVE the shirt.
+   px(-5,-34,8,5,'#d79564');
+   g.drawImage(img,0,0,40,18,-21,-54,42,21);
+   // Arm planted out ahead of the face; alternating hand position when moving.
+   px(6,-27,9,12,'#244b7c');
+   px(10+stride,-17,7,10,'#d79564');
+   px(11+stride,-7,13,5,'#171c26');
  }else if(air){
    // Separate jump silhouette: retain original head, cap, beard and torso,
    // but replace the standing legs with a bent leading knee and trailing leg.
