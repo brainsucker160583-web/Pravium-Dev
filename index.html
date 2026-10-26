@@ -420,25 +420,25 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
   const at=audio.ctx.currentTime;
   audio.master.gain.cancelScheduledValues(at);
   audio.master.gain.setValueAtTime(audio.on?1:0,at);
-  // Non-melodic hit: sharp whip crack followed by crackling electric arcs.
+  // Loud, sustained electrical sizzle without a whip/slap transient.
   if(audio.sfxOn&&audio.sfxGain){
-   const ac=audio.ctx,duration=.43,count=Math.ceil(ac.sampleRate*duration);
+   const ac=audio.ctx,duration=.66,count=Math.ceil(ac.sampleRate*duration);
    const buffer=ac.createBuffer(1,count,ac.sampleRate),data=buffer.getChannelData(0);
-   let snap=0;
+   let smooth=0;
    for(let i=0;i<count;i++){
     const time=i/ac.sampleRate,noise=Math.random()*2-1;
-    const whip=Math.exp(-time*110);
-    const fizz=time>.018?Math.exp(-(time-.018)*5.5):0;
-    const sparks=(Math.random()<.065?((Math.random()*2-1)*1.8):0);
-    snap=snap*.48+noise*.52;
-    const flutter=.58+.42*Math.sin(time*900)*Math.sin(time*143);
-    data[i]=Math.max(-1,Math.min(1,snap*whip*1.15+(noise*.60+sparks)*fizz*flutter));
+    const fade=Math.min(1,time/.038)*Math.min(1,(duration-time)/.14);
+    const hum=Math.sin(time*2*Math.PI*117)+.45*Math.sin(time*2*Math.PI*233);
+    const jitter=(Math.random()<.036?Math.random()*2-1:0);
+    const pulse=.68+.32*Math.sin(time*2*Math.PI*29);
+    smooth=smooth*.35+noise*.65;
+    data[i]=Math.max(-1,Math.min(1,fade*(hum*.22+smooth*.52*pulse+jitter*.43)));
    }
    const src=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();
-   src.buffer=buffer;filter.type='highpass';filter.frequency.value=1100;
+   src.buffer=buffer;filter.type='highpass';filter.frequency.value=420;
    gain.gain.setValueAtTime(.0001,at);
-   gain.gain.linearRampToValueAtTime(.33,at+.002);
-   gain.gain.setValueAtTime(.30,at+.05);
+   gain.gain.linearRampToValueAtTime(.48,at+.035);
+   gain.gain.setValueAtTime(.48,at+.38);
    gain.gain.exponentialRampToValueAtTime(.001,at+duration);
    src.connect(filter).connect(gain).connect(audio.sfxGain);
    src.start(at);src.stop(at+duration+.01);
