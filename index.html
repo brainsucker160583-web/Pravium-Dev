@@ -3,12 +3,12 @@
 <title>Pravium – Chroniken der Zeit</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#111725;color:#fff;font-family:system-ui,sans-serif;overflow:hidden}#wrap{height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px}h1{font-size:clamp(16px,3vw,25px);margin:0;color:#f7df95;text-shadow:2px 2px #5b3335}#frame{position:relative;width:min(100%,1100px);aspect-ratio:16/9;border:4px solid #8c6d50;box-shadow:0 0 0 4px #292e41,0 12px 50px #0009;background:#93cbd4}canvas{width:100%;height:100%;display:block;image-rendering:pixelated}#hud{position:absolute;left:10px;top:9px;right:10px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;font-size:clamp(12px,2.1vw,19px);font-weight:900;text-shadow:2px 2px #1c253b}#message{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#111a2bd6;text-align:center;padding:18px}#message.hidden{display:none}.panel{border:4px solid #dcc17e;background:#25364d;padding:19px;max-width:580px;box-shadow:7px 7px #101620}.panel h2{color:#f4d683;margin:0 0 8px;font-size:clamp(20px,4vw,35px)}.panel p{line-height:1.5}.panel button{font:900 18px system-ui;background:#f3ca72;border:3px solid #6c4339;padding:10px 28px;color:#273142;cursor:pointer}#touch{display:flex;width:min(100%,1100px);justify-content:space-between;touch-action:none;user-select:none;gap:15px}#touch button{min-width:69px;min-height:61px;font:900 24px system-ui;color:white;background:#384c6d;border:3px solid #a8b9cc;border-radius:13px;touch-action:none}#touch button:active,.pressed{background:#7e8659!important}#touch .right{display:flex;gap:12px}#hint{margin:0;color:#c6d0dc;font-size:12px;text-align:center}@media(min-width:900px) and (pointer:fine){#touch{display:none}}@media(max-height:550px){h1,#hint{display:none}#wrap{gap:2px}#frame{max-height:75dvh;width:auto;max-width:100%}#touch button{min-height:44px}}
-</style></head><body><div id="wrap"><h1>PRAVIUM – CHRONIKEN DER ZEIT</h1><div id="frame"><canvas id="game" width="960" height="540" aria-label="Jump-and-Run-Spiel"></canvas><div id="hud"><span id="lives">♥ ♥ ♥</span><span id="coins">◆ 0 / 0</span><span id="era">ZEITALTER I · MITTELALTER</span></div><div style="position:absolute;right:10px;bottom:10px;z-index:3;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px"><button id="audioToggle" aria-label="Musik ausschalten" style="background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 10px;cursor:pointer;font-weight:800">♫ MUSIK AN</button><button id="sfxToggle" aria-label="Soundeffekte ausschalten" style="background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 10px;cursor:pointer;font-weight:800">♪ SFX AN</button></div><div id="message"><div class="panel"><h2 id="mtitle">PRAVIUM – CHRONIKEN DER ZEIT</h2><p id="mbody">Ein kleines Retro-Abenteuer durch die Jahrhunderte. Sammle Münzen, weiche Gegnern aus und erreiche das leuchtende Zeitportal!</p><button id="start">SPIELEN</button></div></div></div><div id="touch"><div class="right"><button data-key="left" aria-label="Links">◀</button><button data-key="right" aria-label="Rechts">▶</button></div><div class="right"><button data-key="jump" aria-label="Springen">▲ SPRUNG</button><button data-key="fire" aria-label="Retroball schießen">● FEUER</button></div></div><p id="hint">PC: A/D oder ←/→ bewegen · Leertaste/W/↑ springen · F/J Retroball schießen · R neu starten · P Pause · Mobil: Touch-Buttons · Controller: Stick/Steuerkreuz bewegen, A springen, X/Y/RT schießen, Start pausieren</p></div>
+</style></head><body><div id="wrap"><h1>PRAVIUM – CHRONIKEN DER ZEIT</h1><div id="frame"><canvas id="game" width="960" height="540" aria-label="Jump-and-Run-Spiel"></canvas><div id="hud"><span id="lives">♥ ♥ ♥</span><span id="coins">◆ 0 / 0</span><span id="era">ZEITALTER I · MITTELALTER</span></div><div style="position:absolute;right:10px;bottom:10px;z-index:3;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px"><button id="audioToggle" aria-label="Musik ausschalten" style="background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 10px;cursor:pointer;font-weight:800">♫ MUSIK AN</button><button id="sfxToggle" aria-label="Soundeffekte ausschalten" style="background:#26364add;color:#fff;border:2px solid #e1ce97;border-radius:8px;padding:8px 10px;cursor:pointer;font-weight:800">♪ SFX AN</button></div><div id="message"><div class="panel"><h2 id="mtitle">PRAVIUM – CHRONIKEN DER ZEIT</h2><p id="mbody">Ein kleines Retro-Abenteuer durch die Jahrhunderte. Sammle Münzen, weiche Gegnern aus und erreiche das leuchtende Zeitportal!</p><button id="start">SPIELEN</button></div></div></div><div id="touch"><div class="right"><button data-key="left" aria-label="Links">◀</button><button data-key="right" aria-label="Rechts">▶</button></div><div class="right"><button data-key="jump" aria-label="Springen">▲ SPRUNG</button><button data-key="down" aria-label="Ducken und kriechen">▼ DUCKEN</button><button data-key="fire" aria-label="Retroball schießen">● FEUER</button></div></div><p id="hint">PC: A/D oder ←/→ bewegen · Leertaste/W/↑ springen · S/↓ ducken · F/J Retroball schießen · R neu starten · P Pause · Mobil: Touch-Buttons · Controller: Stick/Steuerkreuz bewegen, A springen, X/Y/RT schießen, Start pausieren</p></div>
 <script>
 'use strict';
 const c=document.getElementById('game'),g=c.getContext('2d');g.imageSmoothingEnabled=false;
 const W=960,H=540,worldW=4300,ground=460;
-const keys={left:false,right:false,jump:false,fire:false},pad={left:false,right:false,jump:false,fire:false,start:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[],rotors=[];
+const keys={left:false,right:false,jump:false,fire:false,down:false},pad={left:false,right:false,jump:false,fire:false,start:false,down:false},solid=[],coins=[],enemies=[],particles=[],decor=[],shots=[],powerups=[],rotors=[],movingPlatforms=[];
 let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,powerHit=false,portal=4150,level=1,transitionFrames=0;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,sfxOn:true,next:0,step:0,timer:null,master:null,musicGain:null,sfxGain:null};
@@ -195,7 +195,7 @@ $('sfxToggle').onclick=()=>{audio.sfxOn=!audio.sfxOn;$('sfxToggle').textContent=
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
 function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:type===3?36:type===4?43:40,h:type===1?52:type===2?35:type===3?40:type===4?28:46,dir:1,alive:true,phase:Math.random()*7})}
-function restart(nextLevel=1,keepProgress=false){level=nextLevel;const savedLives=lives,savedPower=player&&player.powered;solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;powerHit=false;if(audio.master)audio.master.gain.value=1;score=0;lives=keepProgress?savedLives:3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
+function restart(nextLevel=1,keepProgress=false){level=nextLevel;const savedLives=lives,savedPower=player&&player.powered;solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;movingPlatforms.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;powerHit=false;if(audio.master)audio.master.gain.value=1;score=0;lives=keepProgress?savedLives:3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
 [[310,385,135],[570,318,150],[795,363,125],[1090,403,175],[1360,345,145],[1620,295,150],[1920,388,140],[2170,324,145],[2460,360,130],[2730,390,160],[3000,326,160],[3320,359,160],[3600,395,180],[3900,350,150]].forEach(a=>rect(a[0],a[1],a[2],20));
@@ -210,7 +210,7 @@ for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>265
  [[450,346,98],[935,343,105],[1215,326,104],[1510,271,106],[1805,355,108],[2050,322,96],
  [2320,279,112],[2595,340,100],[2880,292,102],[3175,311,100],[3460,320,100],[3760,309,103]].forEach(a=>rect(a[0],a[1],a[2],20));
 for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
-powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();else addUpperRoutes(1);player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false};
+powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();else addUpperRoutes(1);addMovingPlatforms(level);player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false,crouching:false};
 audio.step=0;audio.next=0;updateHud()}
 
 // Underground level 1-2: platforms bridge chasms and ghost/bat patrols float freely.
@@ -274,6 +274,11 @@ function addUpperRoutes(which){
  }
  total=coins.length;
 }
+function addMovingPlatforms(stage){
+ const defs=stage===1?[[850,310,90,0,70],[1740,278,95,95,0],[2820,250,92,0,80],[3500,240,100,85,0]]:
+ [[800,270,92,0,76],[1580,260,94,90,0],[2510,245,92,0,90],[3730,225,100,85,0]];
+ defs.forEach(([x,y,w,rx,ry],i)=>movingPlatforms.push({baseX:x,baseY:y,x,y,oldX:x,oldY:y,w,h:13,rx,ry,phase:i*1.7}));
+}
 function undergroundBackdrop(){
  const grad=g.createLinearGradient(0,0,0,H);
  grad.addColorStop(0,'#10121e');grad.addColorStop(.55,'#282533');grad.addColorStop(1,'#3d3331');
@@ -300,8 +305,8 @@ function updateHud(){$('era').textContent=(level===1?'LEVEL 1-1 · MITTELALTER':
 function show(title,body,button){$('mtitle').textContent=title;$('mbody').textContent=body;$('start').textContent=button;$('message').classList.remove('hidden')}
 function hide(){$('message').classList.add('hidden')}
 $('start').onclick=()=>{unlockMobileAudio();restart();scene='play';hide()};
-document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup',' ','w','a','d'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k===' '||k==='arrowup'||k==='w')keys.jump=true;if(k==='f'||k==='j')keys.fire=true;if(k==='r'){restart();scene='play';hide()}if(k==='p'&&scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(k==='p'&&scene==='pause'){scene='play';hide()}});
-document.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k===' '||k==='arrowup'||k==='w')keys.jump=false;if(k==='f'||k==='j')keys.fire=false});
+document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown',' ','w','a','d','s'].includes(k))e.preventDefault();if(k==='arrowleft'||k==='a')keys.left=true;if(k==='arrowright'||k==='d')keys.right=true;if(k===' '||k==='arrowup'||k==='w')keys.jump=true;if(k==='f'||k==='j')keys.fire=true;if(k==='arrowdown'||k==='s')keys.down=true;if(k==='r'){restart();scene='play';hide()}if(k==='p'&&scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(k==='p'&&scene==='pause'){scene='play';hide()}});
+document.addEventListener('keyup',e=>{let k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')keys.left=false;if(k==='arrowright'||k==='d')keys.right=false;if(k===' '||k==='arrowup'||k==='w')keys.jump=false;if(k==='f'||k==='j')keys.fire=false;if(k==='arrowdown'||k==='s')keys.down=false});
 document.querySelectorAll('[data-key]').forEach(b=>{b.addEventListener('pointerdown',unlockMobileAudio,{once:true});const k=b.dataset.key;const on=e=>{e.preventDefault();keys[k]=true;b.classList.add('pressed')},off=e=>{e.preventDefault();keys[k]=false;b.classList.remove('pressed')};b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointercancel',off);b.addEventListener('pointerleave',off)});
 window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=keys.fire=false});
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
@@ -338,12 +343,13 @@ function finishHit(){
  deathPending=false;powerHit=false;
 }
 function step(dt){if(scene==='interlude'){transitionFrames-=dt;if(transitionFrames<=0){restart(2,true);scene='play';toast='LEVEL 1-2 · UNTERGRUND';toastTime=180}return}if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
-const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(-5,Math.min(5,p.vx));if(ax)p.face=ax;
+const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);const wantsCrouch=keys.down||pad.down;if(wantsCrouch&&p.h>25){p.y+=p.h-25;p.h=25}if(!wantsCrouch&&p.h<44&&!solid.some(b=>hit({x:p.x,y:p.y-19,w:p.w,h:44},b))){p.y-=19;p.h=44}p.crouching=p.h<44;p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(p.crouching?-2.3:-5,Math.min(p.crouching?2.3:5,p.vx));if(ax)p.face=ax;
 if((keys.jump||pad.jump)&&!wasJump)p.jumpBuffer=9;wasJump=keys.jump||pad.jump;p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.coyote=Math.max(0,p.coyote-dt);
-if(p.jumpBuffer&&p.coyote){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
+if(p.jumpBuffer&&p.coyote&&!p.crouching){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
 if(!(keys.jump||pad.jump)&&p.vy< -4)p.vy=-4;
+for(const m of movingPlatforms){m.oldX=m.x;m.oldY=m.y;const phase=t*.018+m.phase;m.x=m.baseX+Math.sin(phase)*m.rx;m.y=m.baseY+Math.sin(phase)*m.ry;const rider=p.vy>=0&&Math.abs(p.y+p.h-m.oldY)<7&&p.x+p.w>m.oldX+5&&p.x<m.oldX+m.w-5;if(rider){p.x+=m.x-m.oldX;p.y+=m.y-m.oldY;p.grounded=true;p.coyote=8}}
 p.x+=p.vx*dt;p.x=Math.max(0,Math.min(worldW-p.w,p.x));for(const b of solid)if(hit(p,b)){if(p.vx>0)p.x=b.x-p.w;else if(p.vx<0)p.x=b.x+b.w;p.vx=0}
-p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}
+p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}for(const m of movingPlatforms){if(p.vy>=0&&p.x+p.w>m.x+4&&p.x<m.x+m.w-4&&p.y+p.h>=m.y&&p.y+p.h-p.vy*dt<=m.y+15){p.y=m.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}}
 if(p.y>H+100)hurt(true);
 p.walk+=Math.abs(p.vx)*.13*dt;
 for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,h:28})){item.taken=true;p.powered=true;toast="RETROBÄLLE FREIGESCHALTET! F / J / FEUER";toastTime=165;sfx("checkpoint");updateHud()}}
@@ -472,7 +478,12 @@ function avatar(p){
  const bob=moving&&!air?Math.round(Math.abs(Math.sin(phase))*1.5):0;
  g.save();g.translate(dx+width/2,dy+height);
  if(p.face<0)g.scale(-1,1);
- if(air){
+ if(p.crouching){
+   // Kneeling crawl: retain Pravium's head and cap, compress torso/legs.
+   const shift=moving?Math.round(Math.sin(phase)*3):0;
+   g.drawImage(img,frame*40,0,40,38,-24+shift,-36,48,31);
+   g.fillStyle='#244b7c';g.fillRect(-20,-9,29,8);g.fillStyle='#151921';g.fillRect(-24,-4,17,5);g.fillRect(7,-4,20,5);
+ }else if(air){
    // Separate jump silhouette: retain original head, cap, beard and torso,
    // but replace the standing legs with a bent leading knee and trailing leg.
    g.rotate(p.vy< -2?-.065:p.vy>2?.045:0);
@@ -499,6 +510,7 @@ function draw(){if(level===2)undergroundBackdrop();else background();
  // Track high climbs without changing the screen-space backdrop and HUD.
  const verticalCamera=Math.max(0,Math.min(850,260-(player?player.y:370)));
  g.save();g.translate(0,verticalCamera);
+ for(const m of movingPlatforms){const x=m.x-camera;pix(x,m.y,m.w,6,level===2?'#9c91b1':'#e5c373');pix(x,m.y+6,m.w,7,level===2?'#4b5470':'#567d80');pix(x+8,m.y-6,9,6,'#c6eee8')}
  // Vertical ravines: warm pale rock at the opening, fading into deep earthy shadow.
  const groundBlocks=solid.filter(b=>b.y===ground).sort((a,b)=>a.x-b.x);
  let end=0;
@@ -545,7 +557,7 @@ for(const v of particles)pix(v.x-camera,v.y,4,4,v.color);
 g.restore();
 if(toastTime){g.font='bold 21px system-ui';g.textAlign='center';g.fillStyle='#1e3044';g.fillRect(265,91,430,42);g.fillStyle='#ffe7a2';g.fillText(toast,W/2,120)}
 }
-function pollGamepad(){const list=navigator.getGamepads?navigator.getGamepads():[];let gp=null;for(const p of list){if(p&&p.connected){gp=p;break}}if(!gp){pad.left=pad.right=pad.jump=pad.fire=pad.start=false;return}const pressed=n=>Boolean(gp.buttons[n]&&gp.buttons[n].pressed),axis=gp.axes[0]||0;pad.left=axis<-.25||pressed(14);pad.right=axis>.25||pressed(15);pad.jump=pressed(0)||pressed(1);pad.fire=pressed(2)||pressed(3)||pressed(7);const start=pressed(9);if(start&&!pad.start){if(scene==='menu'||scene==='dead'||scene==='win'){A();restart();scene='play';hide()}else if(scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(scene==='pause'){scene='play';hide()}}pad.start=start}
+function pollGamepad(){const list=navigator.getGamepads?navigator.getGamepads():[];let gp=null;for(const p of list){if(p&&p.connected){gp=p;break}}if(!gp){pad.left=pad.right=pad.jump=pad.fire=pad.start=pad.down=false;return}const pressed=n=>Boolean(gp.buttons[n]&&gp.buttons[n].pressed),axis=gp.axes[0]||0;pad.left=axis<-.25||pressed(14);pad.right=axis>.25||pressed(15);pad.jump=pressed(0)||pressed(1);pad.down=pressed(13)||((gp.axes[1]||0)>.55);pad.fire=pressed(2)||pressed(3)||pressed(7);const start=pressed(9);if(start&&!pad.start){if(scene==='menu'||scene==='dead'||scene==='win'){A();restart();scene='play';hide()}else if(scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(scene==='pause'){scene='play';hide()}}pad.start=start}
 function loop(now){pollGamepad();if(!last)last=now;let dt=Math.min(2.2,(now-last)/16.6667);last=now;step(dt);draw();if(freezeFrames>0){g.fillStyle='rgba(255,245,235,.22)';g.fillRect(0,0,W,H)}requestAnimationFrame(loop)}
 restart();requestAnimationFrame(loop);
 </script></body></html>
