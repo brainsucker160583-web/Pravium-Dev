@@ -93,17 +93,17 @@ const ROCK={
   ]
  },
  cave:{
-  bpm:104, roots:[40,36,33,35,40,36,35,40],
-  // A falling minor-third 'ghost call' repeats in different harmony.
+  bpm:78,roots:[33,31,29,30,33,28,30,31],
+  // Uneasy chromatic notes, tritones and silence: original SNES horror theme.
   bars:[
-   [[71,6],[67,2],[64,4],[0,4]],
-   [[71,6],[67,2],[72,4],[71,4]],
-   [[69,6],[64,2],[60,4],[64,4]],
-   [[66,4],[71,4],[74,6],[0,2]],
-   [[71,6],[67,2],[64,2],[67,2],[71,4]],
-   [[72,4],[71,2],[67,2],[64,8]],
-   [[66,4],[69,4],[71,4],[74,4]],
-   [[76,8],[71,4],[64,4]]
+   [[57,6],[58,2],[63,4],[0,4]],
+   [[54,4],[53,4],[59,6],[0,2]],
+   [[56,8],[57,2],[62,2],[0,4]],
+   [[51,4],[57,4],[58,4],[53,4]],
+   [[57,4],[58,2],[63,2],[62,4],[0,4]],
+   [[56,6],[50,2],[55,4],[54,4]],
+   [[53,4],[59,4],[58,2],[52,2],[0,4]],
+   [[57,8],[56,4],[0,4]]
   ]
  }
 };
@@ -141,6 +141,22 @@ function musicTick(){
    if(within===0||within===8)drum(108,.20,.16,at);
    if(within===4||within===12)drum(188,.13,.13,at);
    if(within%2===0)drum(2200,.028,.020,at);
+   audio.next+=beat;audio.step++;continue;
+  }
+  if(cave){
+   // Sparse ominous pulse instead of a conventional rock beat.
+   if(within===0){retroInstrument(root,at,beat*14,'bass',.086,.20,.74);retroInstrument(root*Math.SQRT2,at,beat*12,'string',.024,.35,.78)}
+   if(within===8)retroInstrument(root/2,at,beat*7,'bass',.050,.2,.36);
+   let pos=0;for(const [note,units] of song.bars[bar]){
+    if(pos===within&&note){
+     const hz=pitch(note);
+     retroInstrument(hz,at,units*beat*.94,'string',.062,.09,.63);
+     retroInstrument(hz*1.007,at+.11,units*beat*.78,'string',.013,.15,.54);
+     break;
+    }pos+=units;
+   }
+   if(within===0||within===12)drum(66,beat*2,.037,at);
+   if(within===6)retroInstrument(root*4,at,beat*2.5,'string',.013,.06,.18);
    audio.next+=beat;audio.step++;continue;
   }
   if(water){
@@ -182,26 +198,32 @@ function musicTick(){
 // Original triumphant 16-bit fanfare: ascending brass-like melody, harmony, bass and final chord.
 function victoryFanfare(){
  if(!audio.ctx||!audio.on)return;
- const start=audio.ctx.currentTime+.06;
- // Joined, singable victory theme with legato note overlap and broad chord swells.
- const line=[
- [392,0,.53],[523.25,.45,.65],[587.33,1.04,.52],[659.25,1.50,.82],
- [587.33,2.24,.50],[659.25,2.67,.57],[783.99,3.17,1.04],
- [698.46,4.08,.48],[783.99,4.49,.58],[880,5.01,.58],[1046.5,5.52,1.68]];
- for(const [pitch,at,dur] of line){
-   retroInstrument(pitch,start+at,dur,'brass',.076,.07,Math.min(.38,dur*.42));
-   retroInstrument(pitch/2,start+at,dur*.96,'string',.033,.09,Math.min(.35,dur*.4));
+ const start=audio.ctx.currentTime+.07,step=.205;
+ // Original celebratory SNES-rock fanfare: chugging bass, guitar hooks and big ending.
+ const melody=[[392,2],[493.88,2],[587.33,2],[783.99,4],[698.46,2],[783.99,2],[987.77,4],[880,2],[987.77,2],[1174.66,4],[1046.5,2],[1174.66,2],[1567.98,8]];
+ let u=0;for(const [hz,units] of melody){
+  const at=start+u*step,dur=units*step*.94;
+  addRockGuitar(hz,at,dur,.063);
+  retroInstrument(hz/2,at,dur*.9,'string',.034,.015,.3);
+  u+=units;
  }
- const harmony=[[130.81,0,1.45],[174.61,1.5,1.5],[196,3.17,1.8],[261.63,5.52,1.7]];
- for(const [note,at,dur] of harmony){
-   retroInstrument(note,start+at,dur,'bass',.065,.06,.35);
-   [note*2,note*2.5,note*3].forEach((ch,i)=>
-     retroInstrument(ch,start+at,dur,'string',.022+i*.003,.14,.43));
+ const chords=[[98,0],[123.47,8],[146.83,16],[196,24]];
+ for(const [bass,pos] of chords){
+  const at=start+pos*step;
+  retroInstrument(bass,at,step*8,'bass',.105,.02,.35);
+  for(const mul of [2,3,4])addRockGuitar(bass*mul,at,step*3,.040);
  }
- const climax=start+5.52;
- [130.81,261.63,329.63,392,523.25,659.25,783.99,1046.5].forEach((note,i)=>
-  retroInstrument(note,climax,1.86,i===0?'bass':i%2?'brass':'string',i===0?.082:.055,.13,.85));
- drum(130,.24,.12,start);drum(180,.17,.08,start+1.5);drum(130,.28,.12,climax);
+ for(let k=0;k<32;k+=2){
+  const at=start+k*step;
+  retroInstrument(k<16?98:146.83,at,step*1.65,'bass',.065,.01,.07);
+  drum(k%8===0?105:210,k%8===0?.22:.10,k%8===0?.17:.105,at);
+  drum(2150,.029,.023,at);
+ }
+ const finale=start+32*step;
+ retroInstrument(98,finale,1.75,'bass',.135,.015,.70);
+ for(const hz of [196,293.66,392,493.88,587.33,783.99])
+  addRockGuitar(hz,finale,1.55,.066);
+ drum(95,.36,.20,finale);
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
