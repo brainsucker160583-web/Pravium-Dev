@@ -432,8 +432,8 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
     osc.connect(env).connect(audio.sfxGain);
     osc.start(start);osc.stop(start+duration+.015);
    };
-   note(392,at,.19,.19);
-   note(329.63,at+.17,.32,.23);
+   note(783.99,at,.095,.20);
+   note(659.25,at+.085,.14,.23);
   }
   audio.master.gain.setValueAtTime(audio.on?1:0,at+.52);
   audio.master.gain.setValueAtTime(0,at+.54);
