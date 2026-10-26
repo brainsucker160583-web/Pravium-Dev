@@ -420,15 +420,26 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
   const at=audio.ctx.currentTime;
   audio.master.gain.cancelScheduledValues(at);
   audio.master.gain.setValueAtTime(audio.on?1:0,at);
-  // Loud, sustained electrical sizzle without a whip/slap transient.
+  // Powerful whip crack followed by sustained electrical sizzle (SFX only).
   if(audio.sfxOn&&audio.sfxGain){
    const ac=audio.ctx,duration=.66,count=Math.ceil(ac.sampleRate*duration);
-   const snapCount=Math.ceil(ac.sampleRate*.045),snapBuf=ac.createBuffer(1,snapCount,ac.sampleRate),snapData=snapBuf.getChannelData(0);
-   for(let i=0;i<snapCount;i++)snapData[i]=(Math.random()*2-1)*Math.exp(-i/ac.sampleRate*125);
+   // Strong, very short whip crack: sharp initial transient, bright snap, short tail.
+   const snapDuration=.095,snapCount=Math.ceil(ac.sampleRate*snapDuration);
+   const snapBuf=ac.createBuffer(1,snapCount,ac.sampleRate),snapData=snapBuf.getChannelData(0);
+   for(let i=0;i<snapCount;i++){
+    const t=i/ac.sampleRate;
+    const attack=Math.min(1,t/.0015);
+    const crack=Math.exp(-t*92);
+    const tail=.26*Math.exp(-Math.max(0,t-.012)*52);
+    snapData[i]=(Math.random()*2-1)*attack*(crack+tail);
+   }
    const snapSrc=ac.createBufferSource(),snapGain=ac.createGain(),snapFilter=ac.createBiquadFilter();
-   snapSrc.buffer=snapBuf;snapFilter.type='highpass';snapFilter.frequency.value=1200;snapGain.gain.value=.30;
+   snapSrc.buffer=snapBuf;snapFilter.type='highpass';snapFilter.frequency.value=850;
+   snapGain.gain.setValueAtTime(.0001,at);
+   snapGain.gain.linearRampToValueAtTime(.95,at+.003);
+   snapGain.gain.exponentialRampToValueAtTime(.001,at+snapDuration);
    snapSrc.connect(snapFilter).connect(snapGain).connect(audio.sfxGain);
-   snapSrc.start(at);snapSrc.stop(at+.045);
+   snapSrc.start(at);snapSrc.stop(at+snapDuration);
    const buffer=ac.createBuffer(1,count,ac.sampleRate),data=buffer.getChannelData(0);
    let smooth=0;
    for(let i=0;i<count;i++){
@@ -443,7 +454,7 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
    const src=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();
    src.buffer=buffer;filter.type='highpass';filter.frequency.value=420;
    gain.gain.setValueAtTime(.0001,at);
-   gain.gain.linearRampToValueAtTime(.48,at+.08);
+   gain.gain.linearRampToValueAtTime(.48,at+.095);
    gain.gain.setValueAtTime(.48,at+.38);
    gain.gain.exponentialRampToValueAtTime(.001,at+duration);
    src.connect(filter).connect(gain).connect(audio.sfxGain);
