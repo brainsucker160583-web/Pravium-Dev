@@ -248,27 +248,29 @@ function setupUnderground(){
  addUpperRoutes(2);
 }
 function addUpperRoutes(which){
- // Each elevated branch is optional: a series of climbable steps and a reward ledge.
- // Platform height increments and horizontal offsets stay within the hero's jump reach.
- const paths=which===1?[
-  [[1305,255,112],[1405,207,115],[1510,170,135]],
-  [[2290,247,112],[2390,205,120],[2500,164,136]]
- ]:[
-  [[1160,256,112],[1265,210,115],[1375,169,135]],
-  [[2660,247,112],[2765,202,120],[2875,166,135]]
- ];
- for(const path of paths){
-  for(const [x,y,w] of path)rect(x,y,w,20);
-  const [x,y,w]=path[path.length-1];
-  // Coins float above the ledge, including a small hidden bonus trail.
-  for(const offset of [25,55,85,110])money(x+offset,y-30-(offset===55?20:0));
-  // A flying enemy protects the bonus without blocking the main route.
-  foe(x+50,y-62,x+20,x+w-25,which===2?4:3);
+ // Two optional high-altitude routes per level, each climbing 14 reachable steps.
+ // The last 4 steps lead to a high bonus area with a guarded coin cache.
+ const starts=which===1?[300,2290]:[180,2250];
+ for(const start of starts){
+  const climb=[];
+  for(let i=0;i<14;i++){
+   const x=start+i*86, y=409-i*42;
+   rect(x,y,112,20);
+   climb.push([x,y]);
+   if(i%2===1)money(x+54,y-32);
+  }
+  const [topX,topY]=climb[13];
+  rect(topX+102,topY,175,20);
+  for(const dx of [128,163,198,235])money(topX+dx,topY-31);
+  foe(topX+144,topY-68,topX+116,topX+242,which===2?4:3);
  }
- // Ensure new coins do not overlap any solid platforms.
+ // Resolve existing or newly generated coin overlaps after adding platforms.
  for(const coin of coins){
-  const blocking=solid.find(p=>coin.x+8>p.x&&coin.x-8<p.x+p.w&&coin.y+8>p.y&&coin.y-8<p.y+p.h);
-  if(blocking)coin.y=blocking.y-24;
+  for(let pass=0;pass<4;pass++){
+   const blocking=solid.find(p=>coin.x+8>p.x&&coin.x-8<p.x+p.w&&coin.y+8>p.y&&coin.y-8<p.y+p.h);
+   if(!blocking)break;
+   coin.y=blocking.y-24;
+  }
  }
  total=coins.length;
 }
@@ -494,6 +496,9 @@ function avatar(p){
  g.restore();
 }
 function draw(){if(level===2)undergroundBackdrop();else background();
+ // Track high climbs without changing the screen-space backdrop and HUD.
+ const verticalCamera=Math.max(0,Math.min(850,260-(player?player.y:370)));
+ g.save();g.translate(0,verticalCamera);
  // Vertical ravines: warm pale rock at the opening, fading into deep earthy shadow.
  const groundBlocks=solid.filter(b=>b.y===ground).sort((a,b)=>a.x-b.x);
  let end=0;
@@ -537,6 +542,7 @@ for(const x of [1100,2670]){pix(x-camera,ground-64,7,64,'#d7c494');pix(x-camera+
 let px=portal-camera;pix(px-12,ground-128,80,128,'#3a4864');pix(px,ground-117,56,117,'#a46ce4');pix(px+9,ground-104,38,104,'#6ed6dc');for(let i=0;i<9;i++)pix(px+6+Math.sin(t*.06+i)*18+20,ground-108+i*12,5,7,'#fff5b5');
 avatar(player);
 for(const v of particles)pix(v.x-camera,v.y,4,4,v.color);
+g.restore();
 if(toastTime){g.font='bold 21px system-ui';g.textAlign='center';g.fillStyle='#1e3044';g.fillRect(265,91,430,42);g.fillStyle='#ffe7a2';g.fillText(toast,W/2,120)}
 }
 function pollGamepad(){const list=navigator.getGamepads?navigator.getGamepads():[];let gp=null;for(const p of list){if(p&&p.connected){gp=p;break}}if(!gp){pad.left=pad.right=pad.jump=pad.fire=pad.start=false;return}const pressed=n=>Boolean(gp.buttons[n]&&gp.buttons[n].pressed),axis=gp.axes[0]||0;pad.left=axis<-.25||pressed(14);pad.right=axis>.25||pressed(15);pad.jump=pressed(0)||pressed(1);pad.fire=pressed(2)||pressed(3)||pressed(7);const start=pressed(9);if(start&&!pad.start){if(scene==='menu'||scene==='dead'||scene==='win'){A();restart();scene='play';hide()}else if(scene==='play'){scene='pause';show('PAUSE','Zeit für eine kurze Verschnaufpause.','WEITER')}else if(scene==='pause'){scene='play';hide()}}pad.start=start}
