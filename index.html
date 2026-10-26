@@ -12,7 +12,7 @@ const keys={left:false,right:false,jump:false,fire:false,down:false},pad={left:f
 let player,camera=0,score=0,total=0,lives=3,checkpoint=100,scene='menu',last=0,t=0,toast='',toastTime=0,inv=0,wasJump=false,wasFire=false,shotCooldown=0,freezeFrames=0,deathPending=false,powerHit=false,portal=4150,level=1,transitionFrames=0;
 const $=id=>document.getElementById(id);
 const audio={ctx:null,on:true,sfxOn:true,next:0,step:0,timer:null,master:null,musicGain:null,sfxGain:null};
-const A=()=>{if(!audio.ctx){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;audio.ctx=new C()}catch(e){return}}if(!audio.master){audio.master=audio.ctx.createGain();audio.master.connect(audio.ctx.destination)}if(!audio.musicGain){audio.musicGain=audio.ctx.createGain();audio.musicGain.gain.value=audio.on?1.352:0;audio.musicGain.connect(audio.master)}if(!audio.sfxGain){audio.sfxGain=audio.ctx.createGain();audio.sfxGain.gain.value=1.69;audio.sfxGain.connect(audio.master)}if(audio.ctx.state!=='running'){audio.ctx.resume().then(()=>{audio.next=0}).catch(()=>{})}if(!audio.timer)audio.timer=setInterval(musicTick,110)};
+const A=()=>{if(!audio.ctx){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;audio.ctx=new C()}catch(e){return}}if(!audio.master){audio.master=audio.ctx.createGain();audio.master.connect(audio.ctx.destination)}if(!audio.musicGain){audio.musicGain=audio.ctx.createGain();audio.musicGain.gain.value=audio.on?1.352:0;audio.musicGain.connect(audio.master)}if(!audio.sfxGain){audio.sfxGain=audio.ctx.createGain();audio.sfxGain.gain.value=1.69;audio.sfxGain.connect(audio.ctx.destination)}if(audio.ctx.state!=='running'){audio.ctx.resume().then(()=>{audio.next=0}).catch(()=>{})}if(!audio.timer)audio.timer=setInterval(musicTick,110)};
 function unlockMobileAudio(){
  A();if(!audio.ctx)return;
  // iOS requires the audio graph to be activated by a direct touch/click.
@@ -422,21 +422,23 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
   audio.master.gain.setValueAtTime(audio.on?1:0,at);
   // Non-melodic hit: sharp whip crack followed by crackling electric arcs.
   if(audio.sfxOn&&audio.sfxGain){
-   const ac=audio.ctx,duration=.31,count=Math.ceil(ac.sampleRate*duration);
+   const ac=audio.ctx,duration=.43,count=Math.ceil(ac.sampleRate*duration);
    const buffer=ac.createBuffer(1,count,ac.sampleRate),data=buffer.getChannelData(0);
-   let last=0;
+   let snap=0;
    for(let i=0;i<count;i++){
-    const time=i/ac.sampleRate;
-    const whip=Math.exp(-time*75);
-    const sizzling=time>.035?Math.exp(-(time-.035)*11):0;
-    const crackle=(Math.random()<.032?Math.random()*2-1:0);
-    last=last*.18+(Math.random()*2-1)*.82;
-    data[i]=Math.max(-1,Math.min(1,last*(whip*.95+sizzling*.38)+crackle*sizzling*.75));
+    const time=i/ac.sampleRate,noise=Math.random()*2-1;
+    const whip=Math.exp(-time*110);
+    const fizz=time>.018?Math.exp(-(time-.018)*5.5):0;
+    const sparks=(Math.random()<.065?((Math.random()*2-1)*1.8):0);
+    snap=snap*.48+noise*.52;
+    const flutter=.58+.42*Math.sin(time*900)*Math.sin(time*143);
+    data[i]=Math.max(-1,Math.min(1,snap*whip*1.15+(noise*.60+sparks)*fizz*flutter));
    }
    const src=ac.createBufferSource(),filter=ac.createBiquadFilter(),gain=ac.createGain();
-   src.buffer=buffer;filter.type='highpass';filter.frequency.value=720;
+   src.buffer=buffer;filter.type='highpass';filter.frequency.value=1100;
    gain.gain.setValueAtTime(.0001,at);
-   gain.gain.linearRampToValueAtTime(.27,at+.003);
+   gain.gain.linearRampToValueAtTime(.33,at+.002);
+   gain.gain.setValueAtTime(.30,at+.05);
    gain.gain.exponentialRampToValueAtTime(.001,at+duration);
    src.connect(filter).connect(gain).connect(audio.sfxGain);
    src.start(at);src.stop(at+duration+.01);
