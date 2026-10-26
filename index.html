@@ -254,10 +254,10 @@ function addUpperRoutes(which){
  for(const start of starts){
   const climb=[];
   for(let i=0;i<14;i++){
-   const x=start+i*86, y=409-i*42;
-   rect(x,y,112,20);
+   const x=start+i*91+(i%3===2?10:0), y=409-i*42;
+   rect(x,y,(i===4||i===9)?94:66,12);
    climb.push([x,y]);
-   if(i%2===1)money(x+54,y-32);
+   if(i%3===1)money(x+34,y-31);
   }
   const [topX,topY]=climb[13];
   rect(topX+102,topY,175,20);
