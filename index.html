@@ -293,6 +293,16 @@ function setupUnderwater(){
  [[640,205,550,755],[1190,280,1080,1310],[1800,210,1670,1920],[2460,275,2310,2560],[3090,200,2960,3210],[3640,245,3470,3780],[4030,200,3920,4160],[875,120,805,940],[1480,175,1420,1560],[2190,155,2100,2260],[2790,175,2710,2900],[3390,150,3300,3480]].forEach(q=>foe(q[0],q[1],q[2],q[3],5));
  // Ambush fish: visible before activation, short targeted bursts and a cooldown.
  [[1040,150],[1690,325],[2240,115],[2860,330],[3470,130],[3970,300]].forEach(([x,y])=>foe(x,y,x-105,x+105,6));
+ // Electric eels make contact twice as punishing by extending hit-stop.
+ [[770,290],[1570,140],[2350,350],[3200,130],[3740,270]].forEach(([x,y])=>foe(x,y,x-75,x+75,7));
+ // Move any collectible overlapping a coral shelf to clear water above it.
+ for(const coin of coins){
+  for(let i=0;i<6;i++){
+   const block=solid.find(b=>coin.x+8>b.x&&coin.x-8<b.x+b.w&&coin.y+8>b.y&&coin.y-8<b.y+b.h);
+   if(!block)break;
+   coin.y=block.y-26;
+  }
+ }
  powerups.push({x:375,y:230,taken:false},{x:2725,y:210,taken:false});
  total=coins.length;
 }
@@ -343,13 +353,14 @@ window.addEventListener('blur',()=>{keys.left=keys.right=keys.jump=keys.fire=fal
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function pix(x,y,w,h,color){g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)}
 function puff(x,y,col,n=9){for(let i=0;i<n;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:-Math.random()*5-1,life:25+Math.random()*20,color:col})}
-function hurt(fell=false){if((inv>0&&!fell)||freezeFrames>0)return;
+function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)return;
  if(fell){player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;player.grounded=false;}
  powerHit=Boolean(player.powered);
  if(powerHit){player.powered=false;updateHud()}else{lives--;updateHud()}
  deathPending=!powerHit&&lives<=0;inv=95;
  // Punchy impact (90 ms), followed by complete silence during hit-stop.
- freezeFrames=35;
+ freezeFrames=electric?70:35;
+ if(electric){toast='ELEKTROSCHOCK!';toastTime=90}
  if(audio.ctx&&audio.master){
   const at=audio.ctx.currentTime;
   audio.master.gain.cancelScheduledValues(at);
@@ -401,7 +412,7 @@ for(const e of enemies){if(!e.alive)continue;
   if(hit(p,{x:e.x,y:e.y,w:e.w,h:e.h})){hurt();if(freezeFrames>0)break}
   continue;
  }
- const speed=e.type===5?.82:e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
+ const speed=e.type===7?.95:e.type===5?.82:e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
  const nextX=e.x+e.dir*speed*dt;
  // Keep all enemy types on their own stretch of terrain; never cross a deadly gap.
  // Ground blocks touch at 40px seams. Check their full widths, not inset
@@ -412,7 +423,7 @@ for(const e of enemies){if(!e.alive)continue;
  else e.x=nextX;
  e.phase+=dt*(e.type===5?.065:e.type===4?.28:e.type===3?.085:e.type===2?.22:.13);
  const ey=e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
- if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(e.type!==5&&p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
+ if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(e.type!==5&&e.type!==7&&p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt(false,e.type===7);if(freezeFrames>0)break}}}
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
@@ -588,7 +599,12 @@ function draw(){if(level===3)underwaterBackdrop();else if(level===2)undergroundB
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
 for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===5?Math.sin(e.phase)*31:e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
- if(e.type===6){ // fast striped ambush fish with pointed snout and tail
+ if(e.type===7){ // Electric eel, violet body and animated yellow arcs.
+  pix(x,y+13,38,11,'#7756ba');pix(x+27,y+9,12,8,'#a18be1');pix(x+34,y+12,5,4,'#e7f2ff');
+  pix(x+3,y+9,8,5,'#b295ef');pix(x-3,y+15,8,6,'#5c4b94');
+  const flash=Math.sin(e.phase*8)>0;
+  if(flash){pix(x+9,y+4,4,8,'#fff184');pix(x+17,y+1,4,10,'#fff184');pix(x+25,y+4,5,7,'#fff184')}
+ }else if(e.type===6){ // fast striped ambush fish with pointed snout and tail
   g.save();g.translate(x+20,y+17);if(e.vx<0)g.scale(-1,1);
   pix(-18,-7,32,16,'#cc6c47');pix(-14,-11,21,5,'#e8a35e');pix(12,-4,13,9,'#e9ba74');
   pix(-25,-13,10,11,'#a84a52');pix(-25,2,10,11,'#a84a52');
