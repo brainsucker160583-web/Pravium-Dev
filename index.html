@@ -227,6 +227,15 @@ function setupUnderground(){
   const base=[335,378,297,415,345,390][Math.floor(x/105)%6];
   money(x,base);if(Math.floor(x/105)%3===0){money(x+24,base-32);money(x+48,base-15)}
  }
+ // Ensure every coin can be collected: no coin may be embedded inside a stone platform.
+ // Move obstructed coins to a visible position just above the blocking platform.
+ for(const coin of coins){
+  for(let pass=0;pass<solid.length;pass++){
+   const blocking=solid.find(p=>coin.x+8>p.x&&coin.x-8<p.x+p.w&&coin.y+8>p.y&&coin.y-8<p.y+p.h);
+   if(!blocking)break;
+   coin.y=blocking.y-24;
+  }
+ }
  total=coins.length;
  [[505,348,440,710,3],[1100,307,1020,1310,4],[1800,351,1720,2040,3],
  [2185,322,2095,2270,4],[2780,298,2610,2920,3],[3370,270,3300,3560,4],
