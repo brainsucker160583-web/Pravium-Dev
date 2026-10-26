@@ -667,14 +667,12 @@ function avatar(p){
    px(4,-25+bob,9,8,'#181c22');px(5,-25+bob,6,2,'#353a42');
    limb(10,-17+bob,13+step*4,-11-lift,20+step*4,-4-lift,'#d39970',4);
    px(18+step*4,-4-lift,10,4,'#e0aa80');
-   // Clear profile: neck, nose, grey beard and a separate black cap brim.
-   px(9,-30+bob,7,7,'#b87d57');
-   px(8,-38+bob,15,13,'#d79d73');px(20,-34+bob,6,5,'#e6af82');
-   px(8,-32+bob,3,7,'#92918b');px(11,-29+bob,12,7,'#aaa9a2');
-   px(13,-28+bob,10,3,'#d0cec5');px(14,-23+bob,7,2,'#797c7a');
-   px(19,-35+bob,2,2,'#171b20');
-   px(6,-41+bob,17,7,'#101318');px(9,-43+bob,10,3,'#181c22');
-   px(8,-40+bob,10,2,'#363b43');px(17,-36+bob,12,3,'#080b10');
+   // Reuse the standing sprite's actual cap, face and beard in its three-quarter view.
+   // Keep the head upright and attach its neck behind the near shoulder.
+   px(8,-27+bob,8,7,'#b87d57');
+   g.drawImage(img,7,2,27,34,-1,-53+bob,32,40);
+   // Near shoulder overlaps the neck, preserving depth in the crouched torso.
+   px(4,-25+bob,8,5,'#181c22');px(5,-25+bob,6,2,'#353a42');
  }else if(air){
    // Separate jump silhouette: retain original head, cap, beard and torso,
    // but replace the standing legs with a bent leading knee and trailing leg.
