@@ -198,41 +198,43 @@ function musicTick(){
 // Original triumphant 16-bit fanfare: ascending brass-like melody, harmony, bass and final chord.
 function victoryFanfare(){
  if(!audio.ctx||!audio.on)return;
- const start=audio.ctx.currentTime+.065;
- // Original JRPG-inspired victory cue: quick brass pickup, triumphant answer,
- // warm orchestral cadence. No borrowed soundtrack melody.
- const bpm=154,unit=60/bpm/2;
- const notes=[
-  [74,0,1],[78,1,1],[81,2,1],[86,3,2],
-  [83,5,1],[81,6,1],[78,7,1],[81,8,2],
-  [86,10,1],[88,11,1],[90,12,2],[86,14,2],
-  [83,16,1],[86,17,1],[90,18,2],[93,20,4]
+ const start=audio.ctx.currentTime+.04;
+ // Brisk original 16-bit victory rock: tight guitar stabs, not sustained brass/organ.
+ const tick=60/184/2;
+ const riff=[
+  [64,0,1],[67,1,1],[71,2,1],[76,3,2],
+  [74,5,1],[76,6,1],[79,7,2],[76,9,1],
+  [81,10,1],[83,11,2],[79,13,1],[83,14,1],
+  [88,15,3],[86,18,1],[88,19,1],[91,20,4]
  ];
- for(const [midi,pos,len] of notes){
-  const at=start+pos*unit,dur=len*unit*.95,freq=pitch(midi);
-  retroInstrument(freq,at,dur,'brass',.075,.018,.19);
-  retroInstrument(freq/2,at,dur*.92,'string',.029,.035,.27);
+ for(const [note,pos,units] of riff){
+  const at=start+pos*tick,dur=units*tick*.72,frequency=pitch(note);
+  addRockGuitar(frequency,at,dur,.064);
+  if(pos%3===0)retroInstrument(frequency/2,at,dur*.8,'guitar',.027,.008,.09);
  }
- const harmony=[
-  [38,0,6,[0,4,7]],[43,6,6,[0,4,7]],
-  [45,12,6,[0,4,7]],[50,18,9,[0,4,7]]
- ];
- for(const [root,pos,len,intervals] of harmony){
-  const at=start+pos*unit,dur=len*unit;
-  retroInstrument(pitch(root),at,dur,'bass',.10,.025,.35);
-  for(const semitones of intervals)
-   retroInstrument(pitch(root+12+semitones),at,dur,'string',.033,.06,.45);
+ // Punchy syncopated power chords and a low moving bassline.
+ const roots=[40,40,43,45,40,47];
+ for(let i=0;i<24;i++){
+  const at=start+i*tick;
+  if(i%2===0){
+   const root=roots[Math.floor(i/4)%roots.length];
+   retroInstrument(pitch(root),at,tick*1.55,'bass',.104,.005,.075);
+  }
+  if([0,3,6,8,11,14,17,20].includes(i)){
+   const root=roots[Math.floor(i/4)%roots.length];
+   addRockGuitar(pitch(root+12),at,tick*1.25,.059);
+   addRockGuitar(pitch(root+19),at,tick*1.25,.045);
+  }
+  if(i%4===0)drum(105,.16,.16,at);
+  if(i%4===2)drum(195,.095,.125,at);
+  if(i%2===0)drum(2300,.027,.018,at);
  }
- for(let beat=0;beat<12;beat++){
-  const at=start+beat*2*unit;
-  if(beat%2===0)drum(105,.18,.11,at);
-  else drum(195,.10,.075,at);
+ const end=start+24*tick;
+ drum(95,.34,.19,end);
+ retroInstrument(pitch(40),end,1.06,'bass',.12,.01,.35);
+ for(const note of [52,59,64,67,76]){
+  addRockGuitar(pitch(note),end,.95,.056);
  }
- const finale=start+24*unit;
- retroInstrument(pitch(38),finale,1.7,'bass',.12,.035,.68);
- for(const midi of [50,54,57,62,66,69])
-  retroInstrument(pitch(midi),finale,1.55,'string',.037,.06,.62);
- drum(98,.29,.13,finale);
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
