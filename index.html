@@ -436,7 +436,7 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
    const snapSrc=ac.createBufferSource(),snapGain=ac.createGain(),snapFilter=ac.createBiquadFilter();
    snapSrc.buffer=snapBuf;snapFilter.type='highpass';snapFilter.frequency.value=850;
    snapGain.gain.setValueAtTime(.0001,at);
-   snapGain.gain.linearRampToValueAtTime(.95,at+.003);
+   snapGain.gain.linearRampToValueAtTime(2.375,at+.003); // 250% of previous whip crack gain
    snapGain.gain.exponentialRampToValueAtTime(.001,at+snapDuration);
    // Saturation adds loudness and bite without a dangerous 5x output boost.
    const snapDrive=ac.createWaveShaper(),curve=new Float32Array(1024);
