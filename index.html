@@ -420,20 +420,22 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
   const at=audio.ctx.currentTime;
   audio.master.gain.cancelScheduledValues(at);
   audio.master.gain.setValueAtTime(audio.on?1:0,at);
-  // Tuned two-note minor-third sting: G4 -> E4, no pitch bends or harsh noise.
+  // Sharp two-note impact sting with a crisp attack and brief dissonant bite.
   if(audio.sfxOn&&audio.sfxGain){
-   const note=(hz,start,duration,volume)=>{
-    const osc=audio.ctx.createOscillator(),env=audio.ctx.createGain();
-    osc.type='triangle';osc.frequency.setValueAtTime(hz,start);
+   const sting=(hz,start,duration,volume)=>{
+    const osc=audio.ctx.createOscillator(),edge=audio.ctx.createOscillator(),env=audio.ctx.createGain();
+    osc.type='square';edge.type='triangle';
+    osc.frequency.setValueAtTime(hz,start);edge.frequency.setValueAtTime(hz*1.05946,start);
     env.gain.setValueAtTime(.0001,start);
-    env.gain.linearRampToValueAtTime(volume,start+.015);
-    env.gain.setValueAtTime(volume*.8,start+duration*.55);
+    env.gain.linearRampToValueAtTime(volume,start+.003);
     env.gain.exponentialRampToValueAtTime(.0001,start+duration);
-    osc.connect(env).connect(audio.sfxGain);
-    osc.start(start);osc.stop(start+duration+.015);
+    const balance=audio.ctx.createGain();balance.gain.value=.18;
+    osc.connect(env);edge.connect(balance).connect(env);env.connect(audio.sfxGain);
+    osc.start(start);edge.start(start);
+    osc.stop(start+duration+.008);edge.stop(start+duration+.008);
    };
-   note(783.99,at,.095,.20);
-   note(659.25,at+.085,.14,.23);
+   sting(987.77,at,.075,.13);
+   sting(739.99,at+.065,.105,.16);
   }
   audio.master.gain.setValueAtTime(audio.on?1:0,at+.52);
   audio.master.gain.setValueAtTime(0,at+.54);
