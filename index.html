@@ -79,17 +79,17 @@ const pitch=m=>440*Math.pow(2,(m-69)/12);
 const ROCK={
  water:{bpm:68,roots:[40,36,33,35,40,36,38,40],bars:[[[64,8],[67,4],[69,4]],[[67,8],[64,4],[60,4]],[[62,8],[60,4],[57,4]],[[59,12],[0,4]],[[64,8],[71,4],[69,4]],[[67,8],[64,8]],[[62,6],[65,6],[67,4]],[[64,12],[0,4]]]},
  surface:{
-  bpm:124, roots:[42,38,35,37,42,38,37,42],
-  // A -> response -> rising variation -> arrival. The 3-note call E-G-A returns.
+  bpm:142, roots:[40,36,43,38,40,36,38,40],
+  // Original riff-led SNES-inspired rock, with a call-and-response hook.
   bars:[
-   [[73,4],[76,2],[78,2],[76,4],[73,4]],
-   [[73,4],[76,2],[78,2],[81,4],[78,4]],
-   [[74,4],[73,2],[71,2],[69,4],[71,4]],
-   [[73,6],[71,2],[68,4],[73,4]],
-   [[73,4],[76,2],[78,2],[76,2],[78,2],[81,4]],
-   [[81,4],[80,2],[78,2],[76,4],[73,4]],
-   [[77,4],[80,2],[83,2],[80,4],[77,4]],
-   [[78,8],[73,4],[66,4]]
+   [[64,2],[67,2],[69,2],[67,2],[64,4],[62,2],[64,2]],
+   [[0,2],[64,2],[67,2],[72,2],[71,2],[67,2],[64,4]],
+   [[67,2],[69,2],[71,4],[74,2],[71,2],[69,4]],
+   [[66,2],[69,2],[71,2],[69,2],[66,4],[62,4]],
+   [[64,2],[67,2],[69,2],[67,2],[76,4],[74,2],[72,2]],
+   [[72,2],[71,2],[67,2],[64,2],[67,4],[64,4]],
+   [[69,2],[71,2],[74,2],[71,2],[69,2],[67,2],[66,4]],
+   [[64,4],[67,2],[64,2],[62,2],[64,2],[64,4]]
   ]
  },
  cave:{
@@ -123,6 +123,26 @@ function musicTick(){
   const k=audio.step%128,at=audio.next;
   const bar=Math.floor(k/16),within=k%16,root=pitch(song.roots[bar]);
   const cave=level===2,water=level===3;
+  if(level===1){
+   // Syncopated low chugs, short power chords, and a repeating melodic hook.
+   if(within%2===0){
+    const bassNote=(within===6||within===14)?root*1.5:within===10?root*2:root;
+    retroInstrument(bassNote,at,beat*1.85,'bass',.105,.006,.06);
+   }
+   if([0,3,6,8,11,14].includes(within)){
+    const d=beat*(within===0||within===8?2.7:1.7);
+    addRockGuitar(root*2,at,d,.052);
+    addRockGuitar(root*3,at,d,.034);
+   }
+   let pos=0;for(const [note,units] of song.bars[bar]){
+    if(pos===within&&note){retroInstrument(pitch(note),at,units*beat*.88,'guitar',.052,.013,.10);break}
+    pos+=units;
+   }
+   if(within===0||within===8)drum(108,.20,.16,at);
+   if(within===4||within===12)drum(188,.13,.13,at);
+   if(within%2===0)drum(2200,.028,.020,at);
+   audio.next+=beat;audio.step++;continue;
+  }
   if(water){
    if(within===0){retroInstrument(root,at,beat*15,'bass',.046,.32,.85);retroInstrument(root*2,at,beat*14,'string',.025,.4,.9)}
    let pos=0;for(const [note,units] of song.bars[bar]){if(pos===within&&note){retroInstrument(pitch(note),at,units*beat*1.18,'string',.050,.24,.75);if(bar>=4)retroInstrument(pitch(note)/2,at,units*beat,'string',.014,.3,.5);break}pos+=units}
