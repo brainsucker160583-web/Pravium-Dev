@@ -229,12 +229,14 @@ function victoryFanfare(){
   if(i%4===2)drum(195,.095,.125,at);
   if(i%2===0)drum(2300,.027,.018,at);
  }
+ // Dry final hit: short guitar power chord, bass punch and drum crash.
+ // No sustained stacked notes or string/organ-like ending.
  const end=start+24*tick;
- drum(95,.34,.19,end);
- retroInstrument(pitch(40),end,1.06,'bass',.12,.01,.35);
- for(const note of [52,59,64,67,76]){
-  addRockGuitar(pitch(note),end,.95,.056);
- }
+ drum(90,.21,.17,end);
+ drum(2500,.075,.065,end);
+ retroInstrument(pitch(40),end,.26,'bass',.115,.004,.08);
+ addRockGuitar(pitch(52),end,.21,.078);
+ addRockGuitar(pitch(59),end,.19,.055);
 }
 function gameOverJingle(){
  if(!audio.ctx||!audio.on)return;
