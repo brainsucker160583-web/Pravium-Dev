@@ -479,10 +479,19 @@ function avatar(p){
  g.save();g.translate(dx+width/2,dy+height);
  if(p.face<0)g.scale(-1,1);
  if(p.crouching){
-   // Kneeling crawl: retain Pravium's head and cap, compress torso/legs.
-   const shift=moving?Math.round(Math.sin(phase)*3):0;
-   g.drawImage(img,frame*40,0,40,38,-24+shift,-36,48,31);
-   g.fillStyle='#244b7c';g.fillRect(-20,-9,29,8);g.fillStyle='#151921';g.fillRect(-24,-4,17,5);g.fillRect(7,-4,20,5);
+   // Draw a true bent-knee crawl silhouette without squashing the head.
+   // Use the original sprite's head and upper body at their natural proportions.
+   const stride=moving?Math.sin(phase)*3:0;
+   const px=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(Math.round(x),Math.round(y),w,h)};
+   // Horizontal boots, shins and folded knees.
+   px(-20,-7,17,5,'#171c26');px(-18,-10,12,5,'#315e91');
+   px(5+stride,-7,19,5,'#171c26');px(8+stride,-12,12,7,'#315e91');
+   px(-12,-19,23,13,'#244b7c');px(-9,-22,18,7,'#35669e');
+   // Original cap, face and beard remain fully sized; torso leans forward.
+   g.drawImage(img,0,0,40,24,-23,-44,42,25);
+   // Bent supporting arm reaches toward the floor while crawling.
+   px(13,-22,8,12,'#244b7c');px(16+stride,-11,8,7,'#d79564');
+   px(15+stride,-5,11,4,'#171c26');
  }else if(air){
    // Separate jump silhouette: retain original head, cap, beard and torso,
    // but replace the standing legs with a bent leading knee and trailing leg.
