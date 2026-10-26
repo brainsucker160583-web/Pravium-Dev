@@ -77,6 +77,7 @@ function musicVoice(freq,at,dur,type,volume){
 // Surface: Am-F-Dm-E then Am-F-E-Am. Cave: Em-C-Am-B then Em-C-B-Em.
 const pitch=m=>440*Math.pow(2,(m-69)/12);
 const ROCK={
+ water:{bpm:68,roots:[40,36,33,35,40,36,38,40],bars:[[[64,8],[67,4],[69,4]],[[67,8],[64,4],[60,4]],[[62,8],[60,4],[57,4]],[[59,12],[0,4]],[[64,8],[71,4],[69,4]],[[67,8],[64,8]],[[62,6],[65,6],[67,4]],[[64,12],[0,4]]]},
  surface:{
   bpm:124, roots:[45,41,38,40,45,41,40,45],
   // A -> response -> rising variation -> arrival. The 3-note call E-G-A returns.
@@ -117,11 +118,17 @@ function musicTick(){
  if(audio.next<now)audio.next=now+.035;
  let loops=0;
  while(audio.next<now+.30&&loops++<8){
-  const song=level===2?ROCK.cave:ROCK.surface;
+  const song=level===3?ROCK.water:level===2?ROCK.cave:ROCK.surface;
   const beat=60/song.bpm/4; // sixteenth-note sequencing
   const k=audio.step%128,at=audio.next;
   const bar=Math.floor(k/16),within=k%16,root=pitch(song.roots[bar]);
-  const cave=level===2;
+  const cave=level===2,water=level===3;
+  if(water){
+   if(within===0){retroInstrument(root,at,beat*15,'bass',.046,.32,.85);retroInstrument(root*2,at,beat*14,'string',.025,.4,.9)}
+   let pos=0;for(const [note,units] of song.bars[bar]){if(pos===within&&note){retroInstrument(pitch(note),at,units*beat*1.18,'string',.050,.24,.75);if(bar>=4)retroInstrument(pitch(note)/2,at,units*beat,'string',.014,.3,.5);break}pos+=units}
+   if(within===0||within===8)retroInstrument(root*3,at,beat*7,'string',.009,.28,.55);
+   audio.next+=beat;audio.step++;continue;
+  }
   // Evolving eighth-note bass with syncopated roots, fifths, and little fills.
   if(k%2===0){
     const bnote=(within===6||within===14)?root*1.5:within===10?root*2:root;
@@ -279,9 +286,11 @@ function setupUnderwater(){
  // The seabed is solid, while reef shelves and water columns form swim-through passages.
  for(let x=0;x<worldW;x+=60)rect(x,ground,60,100);
  [[470,340,130],[950,300,160],[1500,355,130],[2120,315,145],[2700,345,160],[3260,290,150],[3820,335,145]].forEach(q=>rect(q[0],q[1],q[2],16));
+ // Suspended coral shelves: alternate upper and middle passages with generous swim-through gaps.
+ [[720,100,95],[840,190,118],[1250,75,140],[1390,225,105],[1840,110,128],[2020,195,105],[2370,95,135],[2530,230,115],[2960,115,145],[3160,205,120],[3530,80,130],[3690,215,100]].forEach(q=>rect(q[0],q[1],q[2],19));
  for(let x=185;x<worldW-125;x+=92){const y=175+Math.sin(x*.009)*88;money(x,y);if(x%3<1)money(x+30,y+45)}
  // Jellyfish wander slowly through water and pulse vertically.
- [[640,205,550,755],[1190,280,1080,1310],[1800,210,1670,1920],[2460,275,2310,2560],[3090,200,2960,3210],[3640,245,3470,3780],[4030,200,3920,4160]].forEach(q=>foe(q[0],q[1],q[2],q[3],5));
+ [[640,205,550,755],[1190,280,1080,1310],[1800,210,1670,1920],[2460,275,2310,2560],[3090,200,2960,3210],[3640,245,3470,3780],[4030,200,3920,4160],[875,120,805,940],[1480,175,1420,1560],[2190,155,2100,2260],[2790,175,2710,2900],[3390,150,3300,3480]].forEach(q=>foe(q[0],q[1],q[2],q[3],5));
  powerups.push({x:375,y:230,taken:false},{x:2725,y:210,taken:false});
  total=coins.length;
 }
