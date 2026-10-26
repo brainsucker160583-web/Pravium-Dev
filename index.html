@@ -210,7 +210,7 @@ for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>265
  [[450,346,98],[935,343,105],[1215,326,104],[1510,271,106],[1805,355,108],[2050,322,96],
  [2320,279,112],[2595,340,100],[2880,292,102],[3175,311,100],[3460,320,100],[3760,309,103]].forEach(a=>rect(a[0],a[1],a[2],20));
 for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
-powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false};
+powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();else addUpperRoutes(1);player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false};
 audio.step=0;audio.next=0;updateHud()}
 
 // Underground level 1-2: platforms bridge chasms and ghost/bat patrols float freely.
@@ -245,6 +245,32 @@ function setupUnderground(){
  [2690,274,4,27,-.044],[3450,265,4,27,.044],[4020,247,3,32,-.047]]
  .forEach(([x,y,count,spacing,speed])=>rotors.push({x,y,count,spacing,speed,phase:0}));
  powerups.push({x:335,y:345,taken:false},{x:2640,y:263,taken:false});
+ addUpperRoutes(2);
+}
+function addUpperRoutes(which){
+ // Each elevated branch is optional: a series of climbable steps and a reward ledge.
+ // Platform height increments and horizontal offsets stay within the hero's jump reach.
+ const paths=which===1?[
+  [[1305,255,112],[1405,207,115],[1510,170,135]],
+  [[2290,247,112],[2390,205,120],[2500,164,136]]
+ ]:[
+  [[1160,256,112],[1265,210,115],[1375,169,135]],
+  [[2660,247,112],[2765,202,120],[2875,166,135]]
+ ];
+ for(const path of paths){
+  for(const [x,y,w] of path)rect(x,y,w,20);
+  const [x,y,w]=path[path.length-1];
+  // Coins float above the ledge, including a small hidden bonus trail.
+  for(const offset of [25,55,85,110])money(x+offset,y-30-(offset===55?20:0));
+  // A flying enemy protects the bonus without blocking the main route.
+  foe(x+50,y-62,x+20,x+w-25,which===2?4:3);
+ }
+ // Ensure new coins do not overlap any solid platforms.
+ for(const coin of coins){
+  const blocking=solid.find(p=>coin.x+8>p.x&&coin.x-8<p.x+p.w&&coin.y+8>p.y&&coin.y-8<p.y+p.h);
+  if(blocking)coin.y=blocking.y-24;
+ }
+ total=coins.length;
 }
 function undergroundBackdrop(){
  const grad=g.createLinearGradient(0,0,0,H);
