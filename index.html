@@ -420,13 +420,22 @@ function hurt(fell=false,electric=false){if((inv>0&&!fell)||freezeFrames>0)retur
   const at=audio.ctx.currentTime;
   audio.master.gain.cancelScheduledValues(at);
   audio.master.gain.setValueAtTime(audio.on?1:0,at);
-  if(audio.on){
-   tone(270,.065,'sawtooth',.31,at);
-   tone(95,.09,'square',.29,at);
-   tone(680,.045,'square',.17,at+.017);
+  // Two-note surprise sting, routed through the independent SFX volume.
+  if(audio.sfxOn&&audio.sfxGain){
+   const shock=(hz,start,duration,volume)=>{
+    const osc=audio.ctx.createOscillator(),env=audio.ctx.createGain();
+    osc.type='sawtooth';osc.frequency.setValueAtTime(hz,start);
+    osc.frequency.exponentialRampToValueAtTime(hz*.78,start+duration);
+    env.gain.setValueAtTime(.0001,start);
+    env.gain.exponentialRampToValueAtTime(volume,start+.009);
+    env.gain.exponentialRampToValueAtTime(.0001,start+duration);
+    osc.connect(env).connect(audio.sfxGain);
+    osc.start(start);osc.stop(start+duration+.015);
+   };
+   shock(220,at,.115,.18);shock(104,at+.125,.23,.25);
   }
-  audio.master.gain.setValueAtTime(audio.on?1:0,at+.083);
-  audio.master.gain.setValueAtTime(0,at+.095);
+  audio.master.gain.setValueAtTime(audio.on?1:0,at+.40);
+  audio.master.gain.setValueAtTime(0,at+.43);
  }
 }
 function finishHit(){
