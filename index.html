@@ -201,7 +201,7 @@ $('sfxToggle').onclick=()=>{audio.sfxOn=!audio.sfxOn;$('sfxToggle').textContent=
 
 function rect(x,y,w,h){solid.push({x,y,w,h})}
 function money(x,y){coins.push({x,y,taken:false,phase:Math.random()*6.28})}
-function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:type===3?36:type===4?43:40,h:type===1?52:type===2?35:type===3?40:type===4?28:46,dir:1,alive:true,phase:Math.random()*7})}
+function foe(x,y,min,max,type=0){enemies.push({x,y,min,max,type,w:type===1?44:type===2?38:type===3?36:type===4?43:40,h:type===1?52:type===2?35:type===3?40:type===4?28:46,dir:1,alive:true,phase:Math.random()*7,homeX:x,homeY:y,charge:0,cooldown:0,vx:0,vy:0})}
 function restart(nextLevel=1,keepProgress=false){level=nextLevel;const savedLives=lives,savedPower=player&&player.powered;solid.length=0;coins.length=0;enemies.length=0;decor.length=0;particles.length=0;shots.length=0;powerups.length=0;rotors.length=0;movingPlatforms.length=0;shotCooldown=0;wasFire=false;freezeFrames=0;deathPending=false;powerHit=false;if(audio.master)audio.master.gain.value=1;score=0;lives=keepProgress?savedLives:3;checkpoint=100;camera=0;t=0;inv=0;wasJump=false;
 let seed=12345;function rnd(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>2650&&x<3400)||x>3500)rect(x,ground,40,100)}
@@ -291,6 +291,8 @@ function setupUnderwater(){
  for(let x=185;x<worldW-125;x+=92){const y=175+Math.sin(x*.009)*88;money(x,y);if(x%3<1)money(x+30,y+45)}
  // Jellyfish wander slowly through water and pulse vertically.
  [[640,205,550,755],[1190,280,1080,1310],[1800,210,1670,1920],[2460,275,2310,2560],[3090,200,2960,3210],[3640,245,3470,3780],[4030,200,3920,4160],[875,120,805,940],[1480,175,1420,1560],[2190,155,2100,2260],[2790,175,2710,2900],[3390,150,3300,3480]].forEach(q=>foe(q[0],q[1],q[2],q[3],5));
+ // Ambush fish: visible before activation, short targeted bursts and a cooldown.
+ [[1040,150],[1690,325],[2240,115],[2860,330],[3470,130],[3970,300]].forEach(([x,y])=>foe(x,y,x-105,x+105,6));
  powerups.push({x:375,y:230,taken:false},{x:2725,y:210,taken:false});
  total=coins.length;
 }
@@ -386,6 +388,19 @@ for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,
 for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y+(e.type===5?Math.sin(e.phase)*31:e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0),w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
 for(const e of enemies){if(!e.alive)continue;
+ if(e.type===6){
+  e.cooldown=Math.max(0,e.cooldown-dt);
+  if(e.charge>0){e.x+=e.vx*dt;e.y+=e.vy*dt;e.charge-=dt;
+   if(e.charge<=0){e.cooldown=105;e.vx=0;e.vy=0}
+  }else{
+   e.x+=(e.homeX-e.x)*Math.min(1,.025*dt);e.y+=(e.homeY-e.y)*Math.min(1,.025*dt);
+   const dx=p.x-e.x,dy=p.y-e.y,dist=Math.hypot(dx,dy);
+   if(e.cooldown===0&&dist<225&&dist>1){e.vx=dx/dist*5.5;e.vy=dy/dist*5.5;e.charge=32;e.phase=0}
+  }
+  e.phase+=dt*.12;
+  if(hit(p,{x:e.x,y:e.y,w:e.w,h:e.h})){hurt();if(freezeFrames>0)break}
+  continue;
+ }
  const speed=e.type===5?.82:e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
  const nextX=e.x+e.dir*speed*dt;
  // Keep all enemy types on their own stretch of terrain; never cross a deadly gap.
@@ -573,7 +588,13 @@ function draw(){if(level===3)underwaterBackdrop();else if(level===2)undergroundB
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
 for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===5?Math.sin(e.phase)*31:e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
- if(e.type===5){ // glowing jellyfish with trailing animated tentacles
+ if(e.type===6){ // fast striped ambush fish with pointed snout and tail
+  g.save();g.translate(x+20,y+17);if(e.vx<0)g.scale(-1,1);
+  pix(-18,-7,32,16,'#cc6c47');pix(-14,-11,21,5,'#e8a35e');pix(12,-4,13,9,'#e9ba74');
+  pix(-25,-13,10,11,'#a84a52');pix(-25,2,10,11,'#a84a52');
+  pix(-8,-7,4,16,'#713f58');pix(1,-7,4,16,'#713f58');
+  pix(12,-2,4,4,'#1a273d');g.restore();
+ }else if(e.type===5){ // glowing jellyfish with trailing animated tentacles
   const pulse=Math.sin(e.phase*2)*3;
   pix(x+7,y+5+pulse,31,13,'#c275e3');pix(x+3,y+13+pulse,39,12,'#e0a3f1');pix(x+12,y+10+pulse,6,5,'#fff4fa');pix(x+28,y+10+pulse,6,5,'#fff4fa');
   for(let j=0;j<5;j++)pix(x+8+j*7+Math.sin(e.phase+j)*3,y+26+pulse,3,14+(j%2)*10,'#9de6f2');
