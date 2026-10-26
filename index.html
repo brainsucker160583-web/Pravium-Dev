@@ -210,7 +210,7 @@ for(let x=0;x<worldW;x+=40){if(x<900||(x>1000&&x<1750)||(x>1850&&x<2550)||(x>265
  [[450,346,98],[935,343,105],[1215,326,104],[1510,271,106],[1805,355,108],[2050,322,96],
  [2320,279,112],[2595,340,100],[2880,292,102],[3175,311,100],[3460,320,100],[3760,309,103]].forEach(a=>rect(a[0],a[1],a[2],20));
 for(let i=0;i<85;i++){let x=i*61+rnd()*42;decor.push({x,y:ground-28-rnd()*12,kind:rnd()>.5?1:0})}
-powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();else addUpperRoutes(1);addMovingPlatforms(level);player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false,crouching:false};
+powerups.push({x:375,y:357,taken:false},{x:3055,y:295,taken:false});if(level===2)setupUnderground();else if(level===3)setupUnderwater();else addUpperRoutes(1);if(level!==3)addMovingPlatforms(level);player={x:100,y:370,w:27,h:44,vx:0,vy:0,grounded:false,face:1,walk:0,coyote:0,jumpBuffer:0,powered:keepProgress?Boolean(savedPower):false,crouching:false};
 audio.step=0;audio.next=0;updateHud()}
 
 // Underground level 1-2: platforms bridge chasms and ghost/bat patrols float freely.
@@ -274,6 +274,26 @@ function addUpperRoutes(which){
  }
  total=coins.length;
 }
+function setupUnderwater(){
+ solid.length=0;coins.length=0;enemies.length=0;rotors.length=0;powerups.length=0;decor.length=0;movingPlatforms.length=0;
+ // The seabed is solid, while reef shelves and water columns form swim-through passages.
+ for(let x=0;x<worldW;x+=60)rect(x,ground,60,100);
+ [[470,340,130],[950,300,160],[1500,355,130],[2120,315,145],[2700,345,160],[3260,290,150],[3820,335,145]].forEach(q=>rect(q[0],q[1],q[2],16));
+ for(let x=185;x<worldW-125;x+=92){const y=175+Math.sin(x*.009)*88;money(x,y);if(x%3<1)money(x+30,y+45)}
+ // Jellyfish wander slowly through water and pulse vertically.
+ [[640,205,550,755],[1190,280,1080,1310],[1800,210,1670,1920],[2460,275,2310,2560],[3090,200,2960,3210],[3640,245,3470,3780],[4030,200,3920,4160]].forEach(q=>foe(q[0],q[1],q[2],q[3],5));
+ powerups.push({x:375,y:230,taken:false},{x:2725,y:210,taken:false});
+ total=coins.length;
+}
+function underwaterBackdrop(){
+ const gradient=g.createLinearGradient(0,0,0,H);gradient.addColorStop(0,'#07385b');gradient.addColorStop(.6,'#08637b');gradient.addColorStop(1,'#063e53');g.fillStyle=gradient;g.fillRect(0,0,W,H);
+ for(let i=0;i<12;i++){const x=(i*117-camera*.24)%1100;pix(x,0,45,400,'#ffffff09')}
+ for(let i=0;i<32;i++){
+  const x=((i*151-camera*.48)%1150+1150)%1150-80,y=430+(i%3)*15;
+  pix(x,y,16,80,'#174f60');pix(x+6,y-14,5,25,'#278774');
+ }
+ for(let i=0;i<37;i++){const x=((i*137+t*(.2+i%3*.12)-camera*.8)%1060+1060)%1060-40,y=60+(i*97)%400;g.strokeStyle='#8cdbed66';g.beginPath();g.arc(x,y,2+(i%3),0,Math.PI*2);g.stroke()}
+}
 function addMovingPlatforms(stage){
  const defs=stage===1?[[850,310,90,0,70],[1740,278,95,95,0],[2820,250,92,0,80],[3500,240,100,85,0]]:
  [[800,270,92,0,76],[1580,260,94,90,0],[2510,245,92,0,90],[3730,225,100,85,0]];
@@ -301,7 +321,7 @@ function undergroundBackdrop(){
  // No random specks: large readable formations only.
 }
 
-function updateHud(){$('era').textContent=(level===1?'LEVEL 1-1 · MITTELALTER':'LEVEL 1-2 · UNTERGRUND')+(player&&player.powered?' · ● RETROBÄLLE':'');$('lives').textContent='♥ '.repeat(lives);$('coins').textContent='◆ '+score+' / '+total}
+function updateHud(){$('era').textContent=(level===1?'LEVEL 1-1 · MITTELALTER':level===2?'LEVEL 1-2 · UNTERGRUND':'LEVEL 1-3 · UNTERWASSER')+(player&&player.powered?' · ● RETROBÄLLE':'');$('lives').textContent='♥ '.repeat(lives);$('coins').textContent='◆ '+score+' / '+total}
 function show(title,body,button){$('mtitle').textContent=title;$('mbody').textContent=body;$('start').textContent=button;$('message').classList.remove('hidden')}
 function hide(){$('message').classList.add('hidden')}
 $('start').onclick=()=>{unlockMobileAudio();restart();scene='play';hide()};
@@ -342,21 +362,22 @@ function finishHit(){
  else{player.x=checkpoint;player.y=320;player.vx=0;player.vy=0;toast='Autsch! Zurück zum Kontrollpunkt';toastTime=85}
  deathPending=false;powerHit=false;
 }
-function step(dt){if(scene==='interlude'){transitionFrames-=dt;if(transitionFrames<=0){restart(2,true);scene='play';toast='LEVEL 1-2 · UNTERGRUND';toastTime=180}return}if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
-const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);const wantsCrouch=keys.down||pad.down;if(wantsCrouch&&p.h>25){p.y+=p.h-25;p.h=25}if(!wantsCrouch&&p.h<44&&!solid.some(b=>hit({x:p.x,y:p.y-19,w:p.w,h:44},b))){p.y-=19;p.h=44}p.crouching=p.h<44;p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(p.crouching?-2.3:-5,Math.min(p.crouching?2.3:5,p.vx));if(ax)p.face=ax;
+function step(dt){if(scene==='interlude'){transitionFrames-=dt;if(transitionFrames<=0){const next=level+1;restart(next,true);scene='play';toast=next===2?'LEVEL 1-2 · UNTERGRUND':'LEVEL 1-3 · UNTERWASSER';toastTime=180}return}if(scene!=='play')return;if(freezeFrames>0){freezeFrames-=dt;if(freezeFrames<=0)finishHit();return;}t+=dt;inv=Math.max(0,inv-dt);toastTime=Math.max(0,toastTime-dt);
+const p=player;shotCooldown=Math.max(0,shotCooldown-dt);if((keys.fire||pad.fire)&&!wasFire&&p.powered&&shotCooldown===0){shots.push({x:p.x+(p.face>0?25:-7),y:p.y+19,vx:p.face*10,life:75});shotCooldown=12;sfx('retroshot')}wasFire=keys.fire||pad.fire;let ax=((keys.right||pad.right)?1:0)-((keys.left||pad.left)?1:0);const wantsCrouch=level!==3&&(keys.down||pad.down);if(level===3&&(keys.down||pad.down))p.vy=Math.min(3,p.vy+.32*dt);if(wantsCrouch&&p.h>25){p.y+=p.h-25;p.h=25}if(!wantsCrouch&&p.h<44&&!solid.some(b=>hit({x:p.x,y:p.y-19,w:p.w,h:44},b))){p.y-=19;p.h=44}p.crouching=p.h<44;p.vx+=ax*.72*dt;if(!ax)p.vx*=Math.pow(.76,dt);p.vx=Math.max(level===3?-3:p.crouching?-2.3:-5,Math.min(level===3?3:p.crouching?2.3:5,p.vx));if(ax)p.face=ax;
 if((keys.jump||pad.jump)&&!wasJump)p.jumpBuffer=9;wasJump=keys.jump||pad.jump;p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.coyote=Math.max(0,p.coyote-dt);
-if(p.jumpBuffer&&p.coyote&&!p.crouching){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
-if(!(keys.jump||pad.jump)&&p.vy< -4)p.vy=-4;
+if(level===3&&(keys.jump||pad.jump)){p.vy=Math.max(-4.2,p.vy-.43*dt)}
+if(p.jumpBuffer&&p.coyote&&!p.crouching&&level!==3){p.vy=-12.6;p.grounded=false;p.coyote=0;p.jumpBuffer=0;puff(p.x+14,p.y+42,'#c4be94',5);sfx('jump')}
+if(level!==3&&!(keys.jump||pad.jump)&&p.vy< -4)p.vy=-4;
 for(const m of movingPlatforms){m.oldX=m.x;m.oldY=m.y;const phase=t*.018+m.phase;m.x=m.baseX+Math.sin(phase)*m.rx;m.y=m.baseY+Math.sin(phase)*m.ry;const rider=p.vy>=0&&Math.abs(p.y+p.h-m.oldY)<7&&p.x+p.w>m.oldX+5&&p.x<m.oldX+m.w-5;if(rider){p.x+=m.x-m.oldX;p.y+=m.y-m.oldY;p.grounded=true;p.coyote=8}}
 p.x+=p.vx*dt;p.x=Math.max(0,Math.min(worldW-p.w,p.x));for(const b of solid)if(hit(p,b)){if(p.vx>0)p.x=b.x-p.w;else if(p.vx<0)p.x=b.x+b.w;p.vx=0}
-p.vy=Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}for(const m of movingPlatforms){if(p.vy>=0&&p.x+p.w>m.x+4&&p.x<m.x+m.w-4&&p.y+p.h>=m.y&&p.y+p.h-p.vy*dt<=m.y+15){p.y=m.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}}
+p.vy=level===3?Math.max(-4.2,Math.min(3.1,p.vy*.985+.075*dt)):Math.min(14,p.vy+.64*dt);p.y+=p.vy*dt;if(level===3)p.y=Math.max(32,p.y);p.grounded=false;for(const b of solid)if(hit(p,b)){if(p.vy>=0){p.y=b.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}else{p.y=b.y+b.h;p.vy=0}}for(const m of movingPlatforms){if(p.vy>=0&&p.x+p.w>m.x+4&&p.x<m.x+m.w-4&&p.y+p.h>=m.y&&p.y+p.h-p.vy*dt<=m.y+15){p.y=m.y-p.h;p.vy=0;p.grounded=true;p.coyote=8}}
 if(p.y>H+100)hurt(true);
 p.walk+=Math.abs(p.vx)*.13*dt;
 for(const item of powerups){if(!item.taken&&hit(p,{x:item.x-12,y:item.y-14,w:24,h:28})){item.taken=true;p.powered=true;toast="RETROBÄLLE FREIGESCHALTET! F / J / FEUER";toastTime=165;sfx("checkpoint");updateHud()}}
-for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0),w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
+for(let i=shots.length-1;i>=0;i--){const b=shots[i];b.x+=b.vx*dt;b.life-=dt;if(b.life<=0||solid.some(r=>hit({x:b.x-5,y:b.y-5,w:10,h:10},r))){shots.splice(i,1);continue}for(const e of enemies){if(e.alive&&hit({x:b.x-6,y:b.y-6,w:12,h:12},{x:e.x,y:e.y+(e.type===5?Math.sin(e.phase)*31:e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0),w:e.w,h:e.h})){e.alive=false;b.life=0;puff(e.x+20,e.y+20,"#ffe28a",16);sfx("stomp");break}}if(b.life<=0)shots.splice(i,1)}
 for(const m of coins)if(!m.taken&&hit(p,{x:m.x-8,y:m.y-8,w:16,h:16})){m.taken=true;score++;puff(m.x,m.y,'#ffe38c',8);sfx('coin');updateHud()}
 for(const e of enemies){if(!e.alive)continue;
- const speed=e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
+ const speed=e.type===5?.82:e.type===1?2.0:e.type===2?1.7:e.type===3?1.08:e.type===4?2.3:1.25;
  const nextX=e.x+e.dir*speed*dt;
  // Keep all enemy types on their own stretch of terrain; never cross a deadly gap.
  // Ground blocks touch at 40px seams. Check their full widths, not inset
@@ -365,13 +386,13 @@ for(const e of enemies){if(!e.alive)continue;
  const leadingEdge=nextX+(e.dir>0?e.w+3:-3),center=nextX+e.w/2;
  if(nextX<e.min||nextX>e.max||(e.type<3&&(!hasGroundAt(leadingEdge)||!hasGroundAt(center)))){e.dir*=-1}
  else e.x=nextX;
- e.phase+=dt*(e.type===4?.28:e.type===3?.085:e.type===2?.22:.13);
+ e.phase+=dt*(e.type===5?.065:e.type===4?.28:e.type===3?.085:e.type===2?.22:.13);
  const ey=e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
- if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
+ if(hit(p,{x:e.x,y:ey,w:e.w,h:e.h})){if(e.type!==5&&p.vy>1&&p.y+p.h<ey+e.h*.48){e.alive=false;p.vy=-8;p.grounded=false;puff(e.x+20,ey+14,'#b8df7e',14);sfx('stomp')}else{hurt();if(freezeFrames>0)break}}}
 for(const rotor of rotors){rotor.phase+=rotor.speed*dt;for(let j=1;j<=rotor.count;j++){let a=rotor.phase,rx=rotor.x+Math.cos(a)*rotor.spacing*j,ry=rotor.y+Math.sin(a)*rotor.spacing*j;if(hit(p,{x:rx-10,y:ry-10,w:20,h:20})){hurt();break}}if(freezeFrames>0)break}
 if(p.x>950&&checkpoint<1100){checkpoint=1105;toast='KONTROLLPUNKT ERREICHT';toastTime=115;sfx('checkpoint')}
 if(p.x>2600&&checkpoint<2670){checkpoint=2675;toast='KONTROLLPUNKT ERREICHT';toastTime=115}
-if(p.x>portal-30){if(level===1){scene='interlude';transitionFrames=455;audio.next=0;victoryFanfare();toast='LEVEL 1-1 GESCHAFFT!';toastTime=455}else{scene='win';victoryFanfare();show('UNTERGRUND GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
+if(p.x>portal-30){if(level<3){scene='interlude';transitionFrames=455;audio.next=0;victoryFanfare();toast='LEVEL 1-'+level+' GESCHAFFT!';toastTime=455}else{scene='win';victoryFanfare();show('UNTERWASSERWELT GEMEISTERT!','Pravium hat den Untergrund durchquert und '+score+' von '+total+' Münzen gesammelt.','ERNEUT SPIELEN')}}
 camera+=(Math.max(0,Math.min(worldW-W,p.x-300))-camera)*Math.min(1,.12*dt);
 for(const v of particles){v.x+=v.vx*dt;v.y+=v.vy*dt;v.vy+=.2*dt;v.life-=dt}for(let i=particles.length-1;i>=0;i--)if(particles[i].life<=0)particles.splice(i,1)}
 function castle(x,scale=1){let sx=(x-camera*.28)*scale;let by=405;pix(sx,by-110,145,170,'#73829b');pix(sx+20,by-145,32,45,'#64758b');pix(sx+92,by-145,32,45,'#64758b');for(let i=0;i<4;i++){pix(sx+i*43,by-162,20,20,'#64758b');pix(sx+i*43+5,by-183,10,24,'#8b8796')}pix(sx+57,by-58,40,70,'#374764');pix(sx+30,by-98,13,27,'#b9d6d9');pix(sx+104,by-98,13,27,'#b9d6d9')}
@@ -515,7 +536,7 @@ function avatar(p){
 
  g.restore();
 }
-function draw(){if(level===2)undergroundBackdrop();else background();
+function draw(){if(level===3)underwaterBackdrop();else if(level===2)undergroundBackdrop();else background();
  // Track high climbs without changing the screen-space backdrop and HUD.
  const verticalCamera=Math.max(0,Math.min(850,260-(player?player.y:370)));
  g.save();g.translate(0,verticalCamera);
@@ -542,8 +563,12 @@ function draw(){if(level===2)undergroundBackdrop();else background();
  for(const b of solid){if(level===2){if(b.x-camera>W||b.x+b.w-camera<0)continue;const bx=b.x-camera;pix(bx,b.y,b.w,8,'#78717c');pix(bx,b.y+8,b.w,Math.min(82,b.h-8),'#38313b');pix(bx,b.y,b.w,3,'#aaa0a2')}else platform(b)}
 // Small decorative ground dots removed to keep the view clear.
 for(const m of coins){if(m.taken)continue;let x=m.x-camera,y=m.y+Math.sin(t*.09+m.phase)*3;pix(x-6,y-8,12,16,'#b67f33');pix(x-4,y-10,8,18,'#f9d270');pix(x-2,y-7,4,10,'#fff0a8')}
-for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
- if(e.type===3){ // pale ghost with dark eyes and a waving hem
+for(const e of enemies){if(!e.alive)continue;const x=e.x-camera,y=e.y+(e.type===5?Math.sin(e.phase)*31:e.type===4?Math.sin(e.phase)*25:e.type===3?Math.sin(e.phase)*15:e.type===2?Math.sin(e.phase)*12:0);
+ if(e.type===5){ // glowing jellyfish with trailing animated tentacles
+  const pulse=Math.sin(e.phase*2)*3;
+  pix(x+7,y+5+pulse,31,13,'#c275e3');pix(x+3,y+13+pulse,39,12,'#e0a3f1');pix(x+12,y+10+pulse,6,5,'#fff4fa');pix(x+28,y+10+pulse,6,5,'#fff4fa');
+  for(let j=0;j<5;j++)pix(x+8+j*7+Math.sin(e.phase+j)*3,y+26+pulse,3,14+(j%2)*10,'#9de6f2');
+ }else if(e.type===3){ // pale ghost with dark eyes and a waving hem
   pix(x+8,y+2,21,7,'#d0d8e5');pix(x+3,y+9,32,24,'#e8e7ed');pix(x+5,y+29,8,8,'#e8e7ed');pix(x+16,y+29,8,11,'#d4d8e6');pix(x+27,y+29,7,8,'#e8e7ed');pix(x+10,y+15,6,9,'#28334b');pix(x+23,y+15,6,9,'#28334b');pix(x+18,y+26,5,6,'#4c5065');
  }else if(e.type===4){ // fluttering purple bat
   const wing=Math.round(Math.sin(e.phase*2)*7);
